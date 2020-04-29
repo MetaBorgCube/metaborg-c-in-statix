@@ -46,7 +46,7 @@ context-free syntax
   TypeSpecifier.Complex   = <_Complex>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
-  TypeSpecifier           = ID
+  TypeSpecifier           = TypedefName
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Volatile  = <volatile> 
@@ -54,6 +54,9 @@ context-free syntax
   
   FunctionSpecifier.Inline = <inline>
   FunctionSpecifier.NoReturn = <_Noreturn>
+  
+  AlignmentSpecifier.AlignasConstexpr = <_Alignas(<ConstExp>)>
+  AlignmentSpecifiec.AlignasType = <_Alignas(<DirectDeclarator>)>
   
   StructOrUnionSpecifier.StructOrUnion = <
     <StructOrUnion> <ID?> { 
@@ -67,6 +70,8 @@ context-free syntax
   
   StructOrUnion.Struct = <struct> 
   StructOrUnion.Union  = <union> 
+  
+  TypedefName = ID
   
   InitDeclarator = Declarator 
   
