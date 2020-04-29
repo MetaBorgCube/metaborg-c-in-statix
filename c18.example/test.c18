@@ -1,5 +1,5 @@
+static A *b;
+
 int main(void) {
-  printf("Test...");
-  int code = 0;
-  exit(code);
+  A *b;
 }

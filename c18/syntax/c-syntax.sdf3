@@ -54,7 +54,7 @@ context-free syntax
   > 
   
   StructOrUnionSpecifier.StructOrUnionDecl = <
-    <StructOrUnion> <ID>
+    <StructOrUnion?> <ID>
   > 
   
   StructOrUnion.Struct = <struct> 
