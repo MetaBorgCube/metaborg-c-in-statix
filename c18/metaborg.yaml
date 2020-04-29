@@ -17,7 +17,7 @@ debug:
 language:
   sdf:
     pretty-print: c18
-    sdf2table: c
+    sdf2table: java
     placeholder:
       prefix: "$"
   stratego:
