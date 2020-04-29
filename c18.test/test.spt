@@ -27,3 +27,11 @@ test parse bool object [[
 test parse complex object [[
   _Complex thing;
 ]] parse succeeds
+
+test bitfield in struct [[
+  struct packed_thing {
+    int flags : 3;
+    int type : 3;
+    int op : 2;
+  };
+]] parse succeeds
