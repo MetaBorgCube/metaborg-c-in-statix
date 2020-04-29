@@ -5,3 +5,11 @@ language c18
 test parse [[
   int main(void) { }
 ]] parse succeeds
+
+test parse mixed declarations and statements [[
+  int main(void) {
+    printf("Test...");
+    int code = 0;
+    exit(code);
+  }
+]] parse succeeds

@@ -151,10 +151,12 @@ context-free syntax
   
   Statement = CompoundStatement 
   
+  BlockItem = Declaration
+  BlockItem = Statement
+  
   CompoundStatement.Compound = <
     { 
-      <{Declaration "\n"}*> 
-      <{Statement "\n"}*> 
+      <{BlockItem "\n"}*>
     }
   > 
   Statement.If = <
