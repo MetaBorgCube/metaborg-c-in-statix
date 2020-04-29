@@ -1,5 +1,5 @@
 ---
-id: org.metaborg:c18.metaborg:0.1.0-SNAPSHOT
+id: org.metaborg:c18.example:0.1.0-SNAPSHOT
 name: c18
 dependencies:
   compile:
