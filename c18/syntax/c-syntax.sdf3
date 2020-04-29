@@ -25,6 +25,8 @@ context-free syntax
   DeclarationSpecifier = TypeSpecifier 
   DeclarationSpecifier = TypeQualifier 
   DeclarationSpecifier = FunctionSpecifier
+  DeclarationSpecifier = AlignmentSpecifier
+  DeclarationSpecifier = StaticAssert
   
   StorageClassSpecifier.Auto     = <auto> 
   StorageClassSpecifier.Register = <register> 
@@ -57,6 +59,8 @@ context-free syntax
   
   AlignmentSpecifier.AlignasConstexpr = <_Alignas(<ConstExp>)>
   AlignmentSpecifier.AlignasType = <_Alignas(<DirectDeclarator>)>
+  
+  StaticAssert.StaticAssert = <_Static_assert(<ConstExp>, <STRING>)>
   
   StructOrUnionSpecifier.StructOrUnion = <
     <StructOrUnion> <ID?> { 
