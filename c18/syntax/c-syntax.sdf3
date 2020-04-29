@@ -42,6 +42,7 @@ context-free syntax
   TypeSpecifier.Double    = <double> 
   TypeSpecifier.Signed    = <signed> 
   TypeSpecifier.Unsigned  = <unsigned> 
+  TypeSpecifier.Bool      = <_Bool>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
   TypeSpecifier           = ID

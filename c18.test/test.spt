@@ -17,3 +17,8 @@ test parse mixed declarations and statements [[
 test parse static thread-local object [[
   static _Thread_local struct stat st;
 ]] parse succeeds
+
+
+test parse bool object [[
+  _Bool bool;
+]] parse succeeds
