@@ -43,6 +43,7 @@ context-free syntax
   TypeSpecifier.Signed    = <signed> 
   TypeSpecifier.Unsigned  = <unsigned> 
   TypeSpecifier.Bool      = <_Bool>
+  TypeSpecifier.Complex   = <_Complex>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
   TypeSpecifier           = ID

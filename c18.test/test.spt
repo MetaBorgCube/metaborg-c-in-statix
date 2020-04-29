@@ -22,3 +22,8 @@ test parse static thread-local object [[
 test parse bool object [[
   _Bool bool;
 ]] parse succeeds
+
+
+test parse complex object [[
+  _Complex thing;
+]] parse succeeds
