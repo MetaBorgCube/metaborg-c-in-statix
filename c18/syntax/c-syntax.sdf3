@@ -22,9 +22,9 @@ context-free syntax
   > 
   
   DeclarationSpecifier = StorageClassSpecifier 
-  
   DeclarationSpecifier = TypeSpecifier 
   DeclarationSpecifier = TypeQualifier 
+  DeclarationSpecifier = FunctionSpecifier
   
   StorageClassSpecifier.Auto     = <auto> 
   StorageClassSpecifier.Register = <register> 
@@ -51,6 +51,9 @@ context-free syntax
   TypeQualifier.Const     = <const> 
   TypeQualifier.Volatile  = <volatile> 
   TypeQualifier.Atomic    = <_Atomic>
+  
+  FunctionSpecifier.Inline = <inline>
+  FunctionSpecifier.NoReturn = <_Noreturn>
   
   StructOrUnionSpecifier.StructOrUnion = <
     <StructOrUnion> <ID?> { 

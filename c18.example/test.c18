@@ -1,4 +1,6 @@
-static A *b;
+static _Atomic A *b;
+
+_Noreturn void exit(int);
 
 int main(void) {
   A *b;
