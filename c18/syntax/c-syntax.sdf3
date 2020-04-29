@@ -50,6 +50,7 @@ context-free syntax
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Volatile  = <volatile> 
+  TypeQualifier.Atomic    = <_Atomic>
   
   StructOrUnionSpecifier.StructOrUnion = <
     <StructOrUnion> <ID?> { 

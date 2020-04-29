@@ -35,3 +35,7 @@ test bitfield in struct [[
     int op : 2;
   };
 ]] parse succeeds
+
+test parse automic qualifier [[
+  static _Atomic int lock;
+]] parse succeeds
