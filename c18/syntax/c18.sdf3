@@ -2,4 +2,9 @@ module c18
 
 imports c-syntax
 
-context-free start-symbols TranslationUnit
+context-free start-symbols Start
+
+context-free syntax
+
+  Start = TranslationUnit
+  
