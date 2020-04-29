@@ -3,5 +3,5 @@ module test
 language c18
 
 test parse [[
-
+  int main(void) { }
 ]] parse succeeds
