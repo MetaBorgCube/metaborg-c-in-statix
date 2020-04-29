@@ -13,3 +13,7 @@ test parse mixed declarations and statements [[
     exit(code);
   }
 ]] parse succeeds
+
+test parse static thread-local object [[
+  static _Thread_local struct stat st;
+]] parse succeeds
