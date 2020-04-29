@@ -56,7 +56,7 @@ context-free syntax
   FunctionSpecifier.NoReturn = <_Noreturn>
   
   AlignmentSpecifier.AlignasConstexpr = <_Alignas(<ConstExp>)>
-  AlignmentSpecifiec.AlignasType = <_Alignas(<DirectDeclarator>)>
+  AlignmentSpecifier.AlignasType = <_Alignas(<DirectDeclarator>)>
   
   StructOrUnionSpecifier.StructOrUnion = <
     <StructOrUnion> <ID?> { 
