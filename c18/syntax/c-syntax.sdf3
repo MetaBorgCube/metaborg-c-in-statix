@@ -43,6 +43,7 @@ context-free syntax
   TypeSpecifier.Unsigned  = <unsigned> 
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
+  TypeSpecifier           = ID
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Volatile  = <volatile> 
@@ -54,7 +55,7 @@ context-free syntax
   > 
   
   StructOrUnionSpecifier.StructOrUnionDecl = <
-    <StructOrUnion?> <ID>
+    <StructOrUnion> <ID>
   > 
   
   StructOrUnion.Struct = <struct> 
