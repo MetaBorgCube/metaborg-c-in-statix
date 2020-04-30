@@ -46,6 +46,7 @@ context-free syntax
   TypeSpecifier.Unsigned  = <unsigned> 
   TypeSpecifier.Bool      = <_Bool>
   TypeSpecifier.Complex   = <_Complex>
+  TypeSpecifier.Imaginary = <_Imaginary>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
   TypeSpecifier.TypedefName= <<TypeID>>
