@@ -55,3 +55,7 @@ test parse alignof type [[
     printf("%llu\n", _Alignof(int));
   }
 ]]
+
+test parse imaginary [[
+  _Imaginary number;
+]]

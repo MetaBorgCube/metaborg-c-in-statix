@@ -52,6 +52,7 @@ context-free syntax
   TypeSpecifier.TypedefName= <<TypeID>>
   
   TypeQualifier.Const     = <const> 
+  TypeQualifier.Restrict  = <restrict>
   TypeQualifier.Volatile  = <volatile> 
   TypeQualifier.Atomic    = <_Atomic>
   
@@ -140,7 +141,7 @@ context-free syntax
   TypeName = TypeID 
   
   Pointer.Pointer = <* <TypeQualifier*>> 
-  Pointer.PointerN = <* <TypeQualifier*> <Pointer>> 
+  Pointer.PointerN = <* <TypeQualifier*> <Pointer>>
   
   AbstractDeclarator = Pointer 
   
