@@ -2,6 +2,8 @@ module c18
 
 imports c-syntax
 
+sorts Start
+
 context-free start-symbols Start
 
 context-free syntax
