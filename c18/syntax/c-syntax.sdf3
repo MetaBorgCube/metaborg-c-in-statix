@@ -48,7 +48,7 @@ context-free syntax
   TypeSpecifier.Complex   = <_Complex>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
-  TypeSpecifier           = TypeID
+  TypeSpecifier.TypedefName= <<TypeID>>
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Volatile  = <volatile> 
@@ -63,13 +63,13 @@ context-free syntax
   StaticAssert.StaticAssert = <_Static_assert(<ConstExp>, <STRING>)>
   
   StructOrUnionSpecifier.StructOrUnion = <
-    <StructOrUnion> <ID?> { 
+    <StructOrUnion> <TypeID?> { 
       <StructDeclaration+> 
     }
   > 
   
   StructOrUnionSpecifier.StructOrUnionDecl = <
-    <StructOrUnion> <ID>
+    <StructOrUnion> <TypeID>
   > 
   
   StructOrUnion.Struct = <struct> 
@@ -95,12 +95,12 @@ context-free syntax
   > 
   
   EnumSpecifier.EnumSpec = <
-    enum <ID?> { 
+    enum <TypeID?> { 
       <{Enumerator ", "}+> 
     }
   > 
   EnumSpecifier.EnumSpecDecl = <
-    enum <ID>
+    enum <TypeID>
   > 
   
   Enumerator = ID 
@@ -116,7 +116,7 @@ context-free syntax
   DirectDeclarator.DeclBracket = <(<Declarator>)> 
   DirectDeclarator.ArrayDecl = <<DirectDeclarator> [<ConstExp?>]> 
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
-  DirectDeclarator.FunDecl = <<DirectDeclarator>(<{ID ", "}*>)> 
+//  DirectDeclarator.FunDecl = <<DirectDeclarator>(<{ID ", "}*>)> 
   
   ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}+>> 
   ParameterTypeList.ParamListVarArgs = <<{ParameterDeclaration ", "}+> , ...> 

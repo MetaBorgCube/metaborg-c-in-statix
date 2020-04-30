@@ -5,9 +5,9 @@ context-free syntax
   Constant = IntegerConstant 
   Constant = CharacterConstant 
   Constant = FloatingConstant 
-  Constant = EnumerationConstant 
-  
-  EnumerationConstant.Enum = ID
+//  Constant = EnumerationConstant 
+//  
+//  EnumerationConstant.Enum = ID
 
 lexical syntax // identifiers
   ID   	 = [a-z\_] [a-zA-Z0-9\_]*
