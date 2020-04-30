@@ -10,11 +10,14 @@ context-free syntax
   EnumerationConstant.Enum = ID
 
 lexical syntax // identifiers
-  ID = [a-zA-Z\_] [a-zA-Z0-9\_]* 
+  ID   	 = [a-z\_] [a-zA-Z0-9\_]*
+  TypeID = [A-Z\_] [a-zA-Z0-9\_]* [\_t]?
 lexical restrictions
-  ID -/- [a-zA-Z0-9\_]
+  ID	 -/- [a-zA-Z0-9\_]
+  TypeID -/- [a-zA-Z0-9\_]
 template options
   ID = keyword {reject}
+  TypeID = keyword {reject}
 
  
 context-free syntax // integer constants
