@@ -136,7 +136,7 @@ context-free syntax
     <SpecifierQualifier+> <AbstractDeclarator?>
   > 
 
-  TypeName = ID 
+  TypeName = TypeID 
   
   Pointer.Pointer = <* <TypeQualifier*>> 
   Pointer.PointerN = <* <TypeQualifier*> <Pointer>> 
