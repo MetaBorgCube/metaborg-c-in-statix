@@ -1,5 +1,5 @@
 ---
-id: org.example:c18:0.1.0-SNAPSHOT
+id: org.metaborg:c18:0.1.0-SNAPSHOT
 name: c18
 dependencies:
   compile:
@@ -19,7 +19,7 @@ debug:
 language:
   sdf:
     pretty-print: c18
-    sdf2table: c
+    sdf2table: java
     placeholder:
       prefix: "$"
   stratego:
