@@ -43,3 +43,15 @@ test parse automic qualifier [[
 test parse noreturn inline [[
   _Noreturn inline fail(const char *);
 ]]
+
+test parse alignof expr [[
+  int main(void) {
+    printf("%llu\n", _Alignof(0));
+  }
+]]
+
+test parse alignof type [[
+  int main(void) {
+    printf("%llu\n", _Alignof(int));
+  }
+]]

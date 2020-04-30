@@ -248,6 +248,8 @@ context-free syntax
   Exp.UnOp      = <<UnaryOp> <Exp>> 
   Exp.Sizeof    = <sizeof <Exp>> 
   Exp.SizeofT   = <sizeof(<TypeName>)> 
+  Exp.Alignof   = <_Alignof <Exp>>
+  Exp.AlignofT  = <_Alignof(<TypeName>)>
   Exp.Subscript = <<Exp>[<Exp>]> 
   Exp.Call      = <<Exp>(<{Exp ", "}*>)> 
   Exp.Proj      = <<Exp>.<ID>> 
