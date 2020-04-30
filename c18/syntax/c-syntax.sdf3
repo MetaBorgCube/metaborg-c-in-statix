@@ -48,7 +48,7 @@ context-free syntax
   TypeSpecifier.Complex   = <_Complex>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
-  TypeSpecifier           = TypedefName
+  TypeSpecifier           = TypeID
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Volatile  = <volatile> 
@@ -73,9 +73,7 @@ context-free syntax
   > 
   
   StructOrUnion.Struct = <struct> 
-  StructOrUnion.Union  = <union> 
-  
-  TypedefName = ID
+  StructOrUnion.Union  = <union>
   
   InitDeclarator = Declarator 
   
