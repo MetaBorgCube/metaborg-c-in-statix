@@ -1,13 +1,12 @@
 module c18
 
-imports
-  
-  Common
+imports c-syntax
 
-context-free start-symbols
-  
-  Start
+sorts Start
+
+context-free start-symbols Start
 
 context-free syntax
+
+  Start = TranslationUnit
   
-  Start.Empty = <>
