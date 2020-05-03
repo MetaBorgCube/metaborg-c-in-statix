@@ -10,8 +10,8 @@ context-free syntax
 //  EnumerationConstant.Enum = ID
 
 lexical syntax // identifiers
-  ID   	 = [a-z\_] [a-zA-Z0-9\_]*
-  TypeID = [A-Z\_] [a-zA-Z0-9\_]* [\_t]?
+  ID   	 = [a-z] [a-zA-Z0-9\_]*
+  TypeID = [A-Z] [a-zA-Z0-9\_]*
 lexical restrictions
   ID	 -/- [a-zA-Z0-9\_]
   TypeID -/- [a-zA-Z0-9\_]

@@ -101,6 +101,8 @@ context-free syntax
     <SpecifierQualifier+> <{StructDeclarator ","}+>;
   > 
   
+  StructDeclaration.AnonSubStructOrUnion = <<StructOrUnionSpecifier>;>
+  
   SpecifierQualifier = TypeSpecifier 
   SpecifierQualifier = TypeQualifier 
   
@@ -137,7 +139,6 @@ context-free syntax
   DirectDeclarator.DeclBracket = <(<Declarator>)> 
   DirectDeclarator.ArrayDecl = <<DirectDeclarator> [<ConstExp?>]> 
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
-//  DirectDeclarator.FunDecl = <<DirectDeclarator>(<{ID ", "}*>)> 
   
   ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}+>> 
   ParameterTypeList.ParamListVarArgs = <<{ParameterDeclaration ", "}+> , ...> 

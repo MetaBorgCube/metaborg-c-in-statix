@@ -15,7 +15,7 @@ test parse mixed declarations and statements [[
 ]] parse succeeds
 
 test parse static thread-local object [[
-  static _Thread_local struct stat st;
+  static _Thread_local struct Stat st;
 ]] parse succeeds
 
 
@@ -29,7 +29,7 @@ test parse complex object [[
 ]] parse succeeds
 
 test bitfield in struct [[
-  struct packed_thing {
+  struct Packed_thing {
     int flags : 3;
     int type : 3;
     int op : 2;
