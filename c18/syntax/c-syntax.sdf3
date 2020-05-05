@@ -163,7 +163,7 @@ context-free syntax
   Pointer.Pointer = <* <TypeQualifier*>> 
   Pointer.PointerN = <* <TypeQualifier*> <Pointer>>
 
-sorts AbstractDeclarator DirectAbstractDeclarator Statement BlockItem CompoundStatement
+sorts AbstractDeclarator DirectAbstractDeclarator Statement BlockItem CompoundStatement InitClause
 
 context-free syntax
 
@@ -224,7 +224,7 @@ context-free syntax
     while(<Exp>);
   > 
   Statement.For = <
-    for(<Exp?>; <Exp?>; <Exp?>) 
+    for(<InitClause?>; <Exp?>; <Exp?>) 
       <Statement>
   > 
   Statement.Goto = <
@@ -233,6 +233,9 @@ context-free syntax
   Statement.Continue = <continue;> 
   Statement.Break    = <break;> 
   Statement.Return   = <return <Exp?>;> 
+  
+  InitClause = Exp
+  InitClause.InitDecl = <<DeclarationSpecifier+> <{InitDeclarator ", "}*>>
 
 //context-free syntax
 //
@@ -285,6 +288,7 @@ context-free syntax
   Exp.Var       = ID 
   Exp           = Constant 
   Exp.String    = STRING 
+  Exp.LChar     = CHAR
   Exp           = <(<Exp>)> {bracket}
 
 sorts ConstExp AssignExp
