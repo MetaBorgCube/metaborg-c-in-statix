@@ -1,0 +1,58 @@
+module desugar
+
+imports
+
+  src-gen/signatures/c-lexical-sig
+  src-gen/signatures/c-preprocessor-sig
+  src-gen/signatures/c-syntax-sig
+  src-gen/signatures/c18-sig
+  libstratego-lib
+  
+signature
+  sorts
+    BinExp
+    UnExp
+    Plus
+  constructors
+    BinExp : BinOp * Exp * Exp -> Exp
+    UnExp : UnOp * Exp -> Exp
+    
+    Assign : BinOp
+    
+    LOr : BinOp
+    LAnd : BinOp
+    Ior : BinOp
+    Eor : BinOp
+    And : BinOp
+    
+    Add : BinOp
+    Sub : BinOp
+    Mul : BinOp
+    Div : BinOp
+    Mod : BinOp
+    
+    Lshift : BinOp
+    Rshift : BinOp
+    
+    Eq : BinOp
+    Neq : BinOp
+    Lt : BinOp
+    Gt : BinOp
+    Leq : BinOp
+    Geq : BinOp
+    
+rules
+
+  desugar-all = topdown(try(desugar))
+  
+  desugar: Assign(a, AssignNorm(), b) -> BinExp(Assign(), a, b)
+  desugar: Assign(a, AssignMul(), b) -> BinExp(Assign(), a, Mul(a, b))
+  desugar: Assign(a, AssignDiv(), b) -> BinExp(Assign(), a, Div(a, b))
+  desugar: Assign(a, AssignMod(), b) -> BinExp(Assign(), a, Mod(a, b))
+  desugar: Assign(a, AssignAdd(), b) -> BinExp(Assign(), a, Add(a, b))
+  
+  desugar: Add(a, b) -> BinExp(Add(), a, b)
+  desugar: Sub(a, b) -> BinExp(Sub(), a, b)
+  desugar: Mul(a, b) -> BinExp(Mul(), a, b)
+  desugar: Div(a, b) -> BinExp(Div(), a, b)
+  desugar: Mod(a, b) -> BinExp(Mod(), a, b)
