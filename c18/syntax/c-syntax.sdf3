@@ -3,7 +3,7 @@ module c-syntax
 imports c-lexical
 imports c-preprocessor
 
-sorts TranslationUnit ExternalDeclaration FunctionDefinition Declaration
+sorts TranslationUnit FunctionDefinition Declaration // ExternalDeclaration 
 
 context-free syntax
 
