@@ -235,7 +235,7 @@ context-free syntax
   Statement.Return   = <return <Exp?>;> 
   
   InitClause = Exp
-  InitClause.InitDecl = <<DeclarationSpecifier+> <{InitDeclarator ", "}*>>
+  InitClause.ForInitDecl = <<DeclarationSpecifier+> <{InitDeclarator ", "}*>>
 
 //context-free syntax
 //
