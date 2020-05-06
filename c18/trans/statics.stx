@@ -4,21 +4,28 @@ imports
 
   signatures/c18-sig
 
-// see README.md for details on how to switch to multi-file analysis
-
 rules // single-file entry point
 
   programOk : Start
 
-  programOk(_).
+  programOk(TranslationUnit2Start(TranslationUnit(decls))) :- {s}
+    new s,
+    extDeclsOk(s, decls).
+    
+  extDeclsOk maps extDeclOk(*, list(*))
+  
+  extDeclOk : scope * ExternalDeclaration
+  extDeclOk(s, _).
+ 
 
-rules // multi-file entry point
-
-  projectOk : scope
-
-  projectOk(s).
-
-  fileOk : scope * Start
-
-  fileOk(s, _).
+// see README.md for details on how to switch to multi-file analysis
+//rules // multi-file entry point
+//
+//  projectOk : scope
+//
+//  projectOk(s).
+//
+//  fileOk : scope * Start
+//
+//  fileOk(s, _).
   
