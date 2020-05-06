@@ -116,8 +116,6 @@ rules
   desugar: SizeofT(e) -> UnExp(SizeofT(), e)
   desugar: Alignof(e) -> UnExp(Alignof(), e)
   desugar: AlignofT(e) -> UnExp(AlignofT(), e)
-  desugar: PostInc(e) -> UnExp(PostInc(), e)
-  desugar: PostDec(e) -> UnExp(PostDec(), e)
   
   desugar: UnOp(Addr(), e) -> UnExp(Addr(), e)
   desugar: UnOp(Deref(), e) -> UnExp(Deref(), e)
@@ -134,3 +132,6 @@ rules
   
   desugar: PreInc(e) -> BinExp(AssignAdd(), e, DecInt(1))
   desugar: PreDec(e) -> BinExp(AssignMin(), e, DecInt(1))
+  
+  desugar: PostInc(e) -> BinExp(Sub(), PreInc(e), DecInt(1))
+  desugar: PostDec(e) -> BinExp(Add(), PreDec(e), DecInt(1))

@@ -1,0 +1,7 @@
+static _Atomic A *b;
+
+_Noreturn void exit(int);
+
+int main(void) {
+  b++;
+}
