@@ -90,7 +90,6 @@ rules
   desugar: Assign(a, AssignPow(), b) -> BinExp(AssignPow(), a, b)
   desugar: Assign(a, AssignOr(), b) -> BinExp(AssignOr(), a, b)
   
-  desugar: LOr(a, b) -> BinExp(LOr(), a, b)
   desugar: LAnd(a, b) -> BinExp(LAnd(), a, b)
   desugar: Ior(a, b) -> BinExp(Ior(), a, b)
   desugar: Eor(a, b) -> BinExp(Eor(), a, b)
@@ -135,3 +134,5 @@ rules
   
   desugar: PostInc(e) -> BinExp(Sub(), PreInc(e), DecInt(1))
   desugar: PostDec(e) -> BinExp(Add(), PreDec(e), DecInt(1))
+  
+  desugar: LOr(a, b) -> UnExp(Not(), LAnd(UnExp(Not(), a), UnExp(Not(), b)))
