@@ -1,5 +1,6 @@
 module c-lexical
 
+sorts Constant
 context-free syntax
 
   Constant = IntegerConstant 
@@ -9,6 +10,7 @@ context-free syntax
 //  
 //  EnumerationConstant.Enum = ID
 
+sorts ID TypeID
 lexical syntax // identifiers
   ID   	 = [a-z] [a-zA-Z0-9\_]*
   TypeID = [A-Z] [a-zA-Z0-9\_]*
@@ -19,8 +21,8 @@ template options
   ID = keyword {reject}
   TypeID = keyword {reject}
 
- 
-sorts IntegerConstant
+
+sorts IntegerConstant DecInt OctInt HexInt
 context-free syntax // integer constants
   IntegerConstant.DecInt = DecInt 
   IntegerConstant.OctInt = OctInt 
@@ -37,7 +39,7 @@ lexical restrictions
   OctInt -/- [0-7uUlL]
   HexInt -/- [0-9a-fA-FuUlL]
 
-sorts FloatingConstant
+sorts FloatingConstant FLOAT
 context-free syntax
   FloatingConstant.Float = FLOAT
 lexical syntax
@@ -46,7 +48,7 @@ lexical syntax
 lexical restrictions
   FLOAT -/- [0-9fFlLeE]
   
-sorts CharacterConstant
+sorts CharacterConstant CHAR CharChar
 context-free syntax
   CharacterConstant.Char = CHAR 
 lexical syntax 
@@ -56,7 +58,7 @@ lexical syntax
   CharChar = "\\ooo"
   CharChar = "\\x" [0-9a-fA-F] [0-9a-fA-F]
 
-
+sorts STRING StringChar BackSlashChar
 lexical syntax // strings
   STRING     = [L]? "\"" StringChar* "\"" 
   StringChar = ~[\"\n] 
