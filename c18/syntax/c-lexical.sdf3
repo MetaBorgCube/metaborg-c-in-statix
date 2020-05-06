@@ -50,9 +50,9 @@ sorts CharacterConstant
 context-free syntax
   CharacterConstant.Char = CHAR 
 lexical syntax 
-  CHAR     = "`" CharChar "`"
-  CharChar = ~[\\\`]
-  CharChar = "\\" [ntvbrfa\\\?\`\"]
+  CHAR     = "'" CharChar "'"
+  CharChar = ~[\\\']
+  CharChar = "\\" [ntvbrfa\\\?\'\"]
   CharChar = "\\ooo"
   CharChar = "\\x" [0-9a-fA-F] [0-9a-fA-F]
 
