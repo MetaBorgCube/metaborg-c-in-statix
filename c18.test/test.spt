@@ -3,5 +3,85 @@ module test
 language c18
 
 test parse [[
+  int main(void) { }
+]] parse succeeds
 
+test parse mixed declarations and statements [[
+  int main(void) {
+    printf("Test...");
+    int code = 0;
+    exit(code);
+  }
+]] parse succeeds
+
+test parse static thread-local object [[
+  static _Thread_local struct Stat st;
+]] parse succeeds
+
+
+test parse bool object [[
+  _Bool bool;
+]] parse succeeds
+
+
+test parse complex object [[
+  _Complex thing;
+]] parse succeeds
+
+test bitfield in struct [[
+  struct Packed_thing {
+    int flags : 3;
+    int type : 3;
+    int op : 2;
+  };
+]] parse succeeds
+
+test parse atomic qualifier [[
+  static _Atomic int lock;
+]] parse succeeds
+
+test parse noreturn inline [[
+  _Noreturn inline fail(const char *);
+]] parse succeeds
+
+test parse alignof expr [[
+  int main(void) {
+    printf("%llu\n", _Alignof(0));
+  }
+]] parse succeeds
+
+test parse alignof type [[
+  int main(void) {
+    printf("%llu\n", _Alignof(int));
+  }
+]] parse succeeds
+
+test parse imaginary [[
+  _Imaginary number;
+]] parse succeeds
+
+test parse anonyous union [[
+union {
+  float x;
+  int n;
+};
+]] parse succeeds
+
+test parse nested union/struct [[
+struct T {
+  int tag;
+  union {
+    float x;
+    int n;
+  };
+};
+]] parse succeeds
+
+test parse inline function [[
+static inline void swap(int *m, int *n)
+{
+    int tmp = *m;
+    *m = *n;
+    *n = tmp;
+}
 ]] parse succeeds
