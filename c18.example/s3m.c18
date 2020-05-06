@@ -1,6 +1,6 @@
-unsigned int mAX_SAMPLE_SIZE = 64000;
+unsigned int max_sample_size = 64000;
 
-unsigned int mS_TO_OFF(unsigned int ms_) {
+unsigned int ms_to_off(unsigned int ms_) {
   return ((((ms_)[2] << 8) | (ms_)[1]) * 16);
 }
 
@@ -10,59 +10,59 @@ static char *strlcpy(char *dest, const char *src, Size_t size) {
     return dest;
 }
 
-static S3m_vinstrument_t *create_vinstr(Uint8_t *u8, S3m_instrument_t *on_disk) {
-    char title[s3M_TITLE_LENGTH + 1] = {0};
-    memcpy(title, on_disk->title, s3M_TITLE_LENGTH);
+static S3M_vinstrument_t *create_vinstr(UINT8 *u8, S3M_instrument_t *on_disk) {
+    char title[s3m_title_length + 1] = {0};
+    memcpy(title, on_disk->title, s3m_title_length);
 
-    Uint16_t sample_size = on_disk->length;
-    if (sample_size > mAX_SAMPLE_SIZE) {
+    UINT16 sample_size = on_disk->length;
+    if (sample_size > max_sample_size) {
         fprintf(stderr, "Warning: sample %s size %hu exceeds limit of %hu.\n",
-            title, sample_size, (Uint16_t) mAX_SAMPLE_SIZE
+            title, sample_size, (UINT16) max_sample_size
         );
-        sample_size = mAX_SAMPLE_SIZE;
+        sample_size = max_sample_size;
     }
 
-    S3m_vinstrument_t *vinstr = malloc(sizeof(s3m_vinstrument_t) + sample_size * sizeof(float));
+    S3M_vinstrument_t *vinstr = malloc(sizeof(s3m_vinstrument_t) + sample_size * sizeof(float));
     assert(vinstr);
 
     vinstr->on_disk = on_disk;
     vinstr->sample_length = sample_size;
 
     if (!(on_disk->flags & 4)) {
-        Uint8_t *rawSample = (Uint8_t *) (u8 + mS_TO_OFF(on_disk->memseg));
-        for (Uint16_t i = 0; i < sample_size; ++i) {
+        UINT8 *rawSample = (UINT8 *) (u8 + ms_to_off(on_disk->memseg));
+        for (UINT16 i = 0; i < sample_size; ++i) {
             vinstr->sample[i] = (rawSample[i] / 128.f) - 1;
             assert(vinstr->sample[i] <= 1);
             assert(vinstr->sample[i] >= -1);
         }
     } else {
-        Uint16_t *rawSample = (Uint16_t *) (u8 + mS_TO_OFF(on_disk->memseg));
-        for (Uint16_t i = 0; i < sample_size; ++i) {
+        UINT16 *rawSample = (UINT16 *) (u8 + ms_to_off(on_disk->memseg));
+        for (UINT16 i = 0; i < sample_size; ++i) {
             vinstr->sample[i] = (rawSample[i] / 65536.f) - 0.5;
             assert(vinstr->sample[i] <= 1);
             assert(vinstr->sample[i] >= -1);
         }
     }
 
-    memcpy(vinstr->title, title, s3M_TITLE_LENGTH + 1);
+    memcpy(vinstr->title, title, s3m_title_length + 1);
 
     return vinstr;
 }
 
-static S3m_cell_t *read_pattern(S3m_t *s3m, Uint8_t *u8) {
-    S3m_cell_t *cells = calloc(s3M_NUM_ROWS_PER_PATTERN * s3M_NUM_CHANNELS, sizeof(S3m_cell_t));
+static S3M_cell_t *read_pattern(S3M_t *s3m, UINT8 *u8) {
+    S3M_cell_t *cells = calloc(s3m_num_rows_per_pattern * s3m_num_channels, sizeof(S3M_cell_t));
     assert(cells);
 
-    Uint16_t length = *((Uint16_t *) u8);
+    UINT16 length = *((UINT16 *) u8);
 
     u8 += 2;
 
-    Uint8_t previous_note[s3M_NUM_CHANNELS] = {0};
-    Uint8_t previous_instrument[s3M_NUM_CHANNELS] = {0};
-    Uint8_t previous_volume[s3M_NUM_CHANNELS] = {0};
+    UINT8 previous_note[s3m_num_channels] = {0};
+    UINT8 previous_instrument[s3m_num_channels] = {0};
+    UINT8 previous_volume[s3m_num_channels] = {0};
 
-    for (int row = 0; row < s3M_NUM_ROWS_PER_PATTERN && u8 < u8 + length;) {
-        S3m_cell_t cell = {0};
+    for (int row = 0; row < s3m_num_rows_per_pattern && u8 < u8 + length;) {
+        S3M_cell_t cell = {0};
         cell.raw = *u8;
         ++u8;
 
@@ -71,7 +71,7 @@ static S3m_cell_t *read_pattern(S3m_t *s3m, Uint8_t *u8) {
             continue;
         }
 
-        Uint8_t channel = cell.raw & (s3M_NUM_CHANNELS - 1);
+        UINT8 channel = cell.raw & (s3m_num_channels - 1);
 
         if (cell.raw & 32) {
             cell.note = *u8;
@@ -127,7 +127,7 @@ static S3m_cell_t *read_pattern(S3m_t *s3m, Uint8_t *u8) {
     return cells;
 }
 
-S3m_error_t s3m_open(void *buf, Off_t buf_size, S3m_t *s3m) {
+S3M_error_t s3m_open(void *buf, Off_t buf_size, S3M_t *s3m) {
     s3m_assert_static_invariants();
 
     assert(buf);
@@ -135,41 +135,41 @@ S3m_error_t s3m_open(void *buf, Off_t buf_size, S3m_t *s3m) {
 
     s3m->hdr = buf;
 
-    if (s3m->hdr->magic1 != s3M_HEADER_MAGIC_1
-            || memcmp(s3m->hdr->magic2, s3M_HEADER_MAGIC_2, sizeof(S3M_HEADER_MAGIC_2) - 1)) {
-        return s3M_E_BAD_HEADER_MAGIC;
+    if (s3m->hdr->magic1 != s3m_header_magic_1
+            || memcmp(s3m->hdr->magic2, s3m_header_magic_2, sizeof(s3m_header_magic_2) - 1)) {
+        return s3m_e_bad_header_magic;
     }
 
     s3m->tempo = s3m->hdr->initial_tempo;
     s3m->speed = s3m->hdr->initial_speed;
 
-    Uint8_t *u8 = buf;
-    Uint16_t *u16 = buf;
+    UINT8 *u8 = buf;
+    UINT16 *u16 = buf;
 
     s3m->orders = u8 + sizeof(s3m_header_t);
 
-    s3m->instruments = malloc(s3m->hdr->num_instruments * sizeof(S3m_vinstrument_t *));
+    s3m->instruments = malloc(s3m->hdr->num_instruments * sizeof(S3M_vinstrument_t *));
     assert(s3m->instruments);
 
-    for (Uint16_t i = 0; i < s3m->hdr->num_instruments; ++i) {
-        Uint16_t pp = u16[s3M_INPP_OFFSET(s3m) / 2 + i] * 16;
+    for (UINT16 i = 0; i < s3m->hdr->num_instruments; ++i) {
+        UINT16 pp = u16[s3m_inpp_offset(s3m) / 2 + i] * 16;
 
-        S3m_instrument_t *on_disk = (S3m_instrument_t *) (u8 + pp);
+        S3M_instrument_t *on_disk = (S3M_instrument_t *) (u8 + pp);
         s3m->instruments[i] = create_vinstr(u8, on_disk);
     }
 
-    s3m->patterns = malloc(s3m->hdr->num_patterns * sizeof(S3m_cell_t *));
+    s3m->patterns = malloc(s3m->hdr->num_patterns * sizeof(S3M_cell_t *));
     assert(s3m->patterns);
 
-    for (Uint16_t i = 0; i < s3m->hdr->num_patterns; ++i) {
-        Uint16_t pp = u16[s3M_PAPP_OFFSET(s3m) / 2 + i] * 16;
+    for (UINT16 i = 0; i < s3m->hdr->num_patterns; ++i) {
+        UINT16 pp = u16[s3m_papp_offset(s3m) / 2 + i] * 16;
 
         if (!pp) {
             s3m->patterns[i] = ((void *) 0);
             continue;
         }
 
-        S3m_cell_t *cells = read_pattern(s3m, u8 + pp);
+        S3M_cell_t *cells = read_pattern(s3m, u8 + pp);
         s3m->patterns[i] = cells;
     }
 
@@ -218,7 +218,7 @@ static int note_periods[] = {
      907
 };
 
-void s3m_note_to_text(Uint8_t note, char *buf, Size_t len) {
+void s3m_note_to_text(UINT8 note, char *buf, Size_t len) {
     if ((note >> 4) == 0xF) {
         strlcpy(buf, "^^ ", len);
     } else {
@@ -226,7 +226,7 @@ void s3m_note_to_text(Uint8_t note, char *buf, Size_t len) {
     }
 }
 
-void s3m_effect_to_text(Uint8_t effect, Uint8_t data, char *buf, Size_t len) {
+void s3m_effect_to_text(UINT8 effect, UINT8 data, char *buf, Size_t len) {
     if (!effect) {
         strlcpy(buf, "---", len);
         return;
@@ -235,14 +235,14 @@ void s3m_effect_to_text(Uint8_t effect, Uint8_t data, char *buf, Size_t len) {
     snprintf(buf, len, "%c%02hhX", 'A' + effect - 1, data);
 }
 
-void s3m_cell_to_text(s3m_cell_t *cell, char *buf, size_t len) {
+void s3m_cell_to_text(S3M_cell_t *cell, char *buf, Size_t len) {
     assert(cell);
 
-    size_t note_buf_len = 5;
+    Size_t note_buf_len = 5;
     char note_buf[note_buf_len];
     s3m_note_to_text(cell->note, note_buf, note_buf_len);
 
-    size_t effect_buf_len = 4;
+    Size_t effect_buf_len = 4;
     char effect_buf[effect_buf_len];
     s3m_effect_to_text(cell->effect, cell->effect_info, effect_buf, effect_buf_len);
 
@@ -256,7 +256,7 @@ void s3m_cell_to_text(s3m_cell_t *cell, char *buf, size_t len) {
     }
 }
 
-double s3m_get_note_freq(s3m_vinstrument_t *vinstr, uint8_t note) {
+double s3m_get_note_freq(S3M_vinstrument_t *vinstr, UINT8 note) {
     double period = 8368.0 * 16 * (note_periods[note & 0xF] >> (note >> 4)) 
                   / vinstr->on_disk->c5_freq;
 
