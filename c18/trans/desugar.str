@@ -12,12 +12,23 @@ signature
   sorts
     BinExp
     UnExp
-    Plus
   constructors
     BinExp : BinOp * Exp * Exp -> Exp
     UnExp : UnOp * Exp -> Exp
     
-    Assign : BinOp
+    Comma : BinOp
+    
+    AssignNorm : BinOp
+    AssignMul : BinOp
+    AssignDiv : BinOp
+    AssignMod : BinOp
+    AssignAdd : BinOp
+    AssignMin : BinOp
+    AssignLsh : BinOp
+    AssignRsh : BinOp
+    AssignAnd : BinOp
+    AssignPow : BinOp
+    AssignOr : BinOp
     
     LOr : BinOp
     LAnd : BinOp
@@ -41,18 +52,84 @@ signature
     Leq : BinOp
     Geq : BinOp
     
+    PreInc : UnOp
+    PreDec : UnOp
+    UnOp : UnOp
+    Sizeof : UnOp
+    SizeofT : UnOp
+    Alignof : UnOp
+    AlignofT : UnOp
+    Subscript : UnOp
+    PostInc : UnOp
+    PostDec : UnOp
+    
+    Addr : UnOp
+    Deref : UnOp
+    Uplus : UnOp
+    Umin : UnOp
+    Tilde : UnOp
+    Not : UnOp
+    
+    UnOp : UnOp
+        
+    
 rules
 
   desugar-all = topdown(try(desugar))
   
-  desugar: Assign(a, AssignNorm(), b) -> BinExp(Assign(), a, b)
-  desugar: Assign(a, AssignMul(), b) -> BinExp(Assign(), a, Mul(a, b))
-  desugar: Assign(a, AssignDiv(), b) -> BinExp(Assign(), a, Div(a, b))
-  desugar: Assign(a, AssignMod(), b) -> BinExp(Assign(), a, Mod(a, b))
-  desugar: Assign(a, AssignAdd(), b) -> BinExp(Assign(), a, Add(a, b))
+  desugar: Comma(a, b) -> BinExp(Comma(), a, b)
   
+  desugar: Assign(a, AssignMul(), b) -> BinExp(AssignMul(), a, b)
+  desugar: Assign(a, AssignDiv(), b) -> BinExp(AssignDiv(), a, b)
+  desugar: Assign(a, AssignMod(), b) -> BinExp(AssignMod(), a, b)
+  desugar: Assign(a, AssignAdd(), b) -> BinExp(AssignAdd(), a, b)
+  desugar: Assign(a, AssignMin(), b) -> BinExp(AssignMin(), a, b)
+  desugar: Assign(a, AssignLsh(), b) -> BinExp(AssignLsh(), a, b)
+  desugar: Assign(a, AssignRsh(), b) -> BinExp(AssignRsh(), a, b)
+  desugar: Assign(a, AssignAnd(), b) -> BinExp(AssignAnd(), a, b)
+  desugar: Assign(a, AssignPow(), b) -> BinExp(AssignPow(), a, b)
+  desugar: Assign(a, AssignOr(), b) -> BinExp(AssignOr(), a, b)
+  
+  desugar: LOr(a, b) -> BinExp(LOr(), a, b)
+  desugar: LAnd(a, b) -> BinExp(LAnd(), a, b)
+  desugar: Ior(a, b) -> BinExp(Ior(), a, b)
+  desugar: Eor(a, b) -> BinExp(Eor(), a, b)
+  desugar: And(a, b) -> BinExp(And(), a, b)
+
   desugar: Add(a, b) -> BinExp(Add(), a, b)
   desugar: Sub(a, b) -> BinExp(Sub(), a, b)
   desugar: Mul(a, b) -> BinExp(Mul(), a, b)
   desugar: Div(a, b) -> BinExp(Div(), a, b)
   desugar: Mod(a, b) -> BinExp(Mod(), a, b)
+
+  desugar: Lshift(a, b) -> BinExp(Lshift(), a, b)
+  desugar: Rshift(a, b) -> BinExp(Rshift(), a, b)
+
+  desugar: Eq(a, b) -> BinExp(Eq(), a, b)
+  desugar: Neq(a, b) -> BinExp(Neq(), a, b)
+  desugar: Lt(a, b) -> BinExp(Lt(), a, b)
+  desugar: Gt(a, b) -> BinExp(Gt(), a, b)
+  desugar: Leq(a, b) -> BinExp(Leq(), a, b)
+  desugar: Geq(a, b) -> BinExp(Geq(), a, b)
+  
+  desugar: PreInc(e) -> UnExp(PreInc(), e)
+  desugar: PreDec(e) -> UnExp(PreDec(), e)
+  desugar: Sizeof(e) -> UnExp(Sizeof(), e)
+  desugar: SizeofT(e) -> UnExp(SizeofT(), e)
+  desugar: Alignof(e) -> UnExp(Alignof(), e)
+  desugar: AlignofT(e) -> UnExp(AlignofT(), e)
+  desugar: PostInc(e) -> UnExp(PostInc(), e)
+  desugar: PostDec(e) -> UnExp(PostDec(), e)
+  
+  desugar: UnOp(Addr(), e) -> UnExp(Addr(), e)
+  desugar: UnOp(Deref(), e) -> UnExp(Deref(), e)
+  desugar: UnOp(Uplus(), e) -> UnExp(Uplus(), e)
+  desugar: UnOp(Umin(), e) -> UnExp(Umin(), e)
+  desugar: UnOp(Tilde(), e) -> UnExp(Tilde(), e)
+  desugar: UnOp(Not(), e) -> UnExp(Not(), e)
+  
+  desugar: Subscript(a, b) -> UnExp(Deref(), BinExp(Add(), a, b))
+  desugar: DerefProj(e, i) -> Proj(UnExp(Deref(), e), i)
+  
+  desugar: While(c, s) -> For(None(), c, None(), s) 
+  desugar: If(c, s) -> IfElse(c, s, Nop())
