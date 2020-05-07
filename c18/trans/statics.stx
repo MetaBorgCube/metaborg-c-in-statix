@@ -25,6 +25,12 @@ rules // multi-file entry point
 
   fileOk(s, _).
 
+//signature
+// sorts TYPE TSPEC TQUAL constructors
+// INT : TSPEC
+// CONST : TQUAL
+// TYPE : list(TQUAL) * TSPEC -> TYPE
+
 signature
   sorts TYPE constructors
   VOID 					: TYPE
@@ -43,18 +49,112 @@ signature
   DOUBLE 				: TYPE
   LONGDOUBLE 			: TYPE
   BOOL 					: TYPE
-  FLOATCOMPLEX 			: TYPE
-  DOUBLECOMPLEX 		: TYPE
-  LONGDOUBLECOMPLEX 	: TYPE
-  // TODO struct/union
-  // TODO enum
-  // TODO others (atomic, imaginary)?
-
+  COMPLEX 				: TYPE -> TYPE
+  IMAGINARY				: TYPE -> TYPE
+  // TODO atomic
+  STRUCT				: scope * STRING -> TYPE
+  UNION					: list(TYPE) -> TYPE
+  ENUM					: TYPE -> TYPE
+  // TODO typedef names
   // TODO type qualifiers
 
+  rules // typing  rules
+	// TODO Find a way to accept specifiers in arbitrary order
+    typeOfType : scope * list(TypeSpecifier) -> TYPE
 
-rules // typing  rules
-  typeOfType : scope * TypeSpecifier -> TYPE
+	// void
+    typeOfType(_, e@[Void()]) = T@VOID() :- @e.type := T.
+
+    // char
+    typeOfType(_, e@[Char()]) = T@CHAR() :- @e.type := T.
+
+    // signed char
+    typeOfType(_, e@[Signed(), Char()]) = T@SCHAR() :- @e.type := T.
+
+    // unsigned char
+    typeOfType(_, e@[Unsigned(), Char()]) = T@UCHAR() :- @e.type := T.
+
+    // short
+    typeOfType(_, e@[Short()]) = T@SHORT() :- @e.type := T.
+    typeOfType(_, e@[Signed(), Short()]) = T@SHORT() :- @e.type := T.
+    typeOfType(_, e@[Short(), Int()]) = T@SHORT() :- @e.type := T.
+    typeOfType(_, e@[Signed(), Short(), Int()]) = T@SHORT() :- @e.type := T.
+
+	// unsigned short
+	typeOfType(_, e@[Unsigned(), Short()]) = T@USHORT() :- @e.type := T.
+	typeOfType(_, e@[Unsigned(), Short(), Int()]) = T@USHORT() :- @e.type := T.
+
+	// int
+	typeOfType(_, e@[Int()]) = T@INT() :- @e.type := T.
+	typeOfType(_, e@[Signed()]) = T@INT() :- @e.type := T.
+	typeOfType(_, e@[Signed(), Int()]) = T@INT() :- @e.type := T.
+
+	// unsigned int
+	typeOfType(_, e@[Unsigned()]) = T@UINT() :- @e.type := T.
+	typeOfType(_, e@[Unsigned(), Int()]) = T@UINT() :- @e.type := T.
+
+	// long
+	typeOfType(_, e@[Long()]) = T@LONG() :- @e.type := T.
+	typeOfType(_, e@[Signed(), Long()]) = T@LONG() :- @e.type := T.
+	typeOfType(_, e@[Long(), Int()]) = T@LONG() :- @e.type := T.
+	typeOfType(_, e@[Signed(), Long(), Int()]) = T@LONG() :- @e.type := T.
+
+	// unsigned long
+	typeOfType(_, e@[Unsigned(), Long()]) = T@ULONG() :- @e.type := T.
+	typeOfType(_, e@[Unsigned(), Long(), Int()]) = T@ULONG() :- @e.type := T.
+
+	// long long
+	typeOfType(_, e@[Long(), Long()]) = T@LONGLONG() :- @e.type := T.
+	typeOfType(_, e@[Signed(), Long(), Long()]) = T@LONGLONG() :- @e.type := T.
+	typeOfType(_, e@[Long(), Long(), Int()]) = T@LONGLONG() :- @e.type := T.
+	typeOfType(_, e@[Signed(), Long(), Long(), Int()]) = T@LONGLONG() :- @e.type := T.
+
+	// unsigned long long
+	typeOfType(_, e@[Unsigned(), Long(), Long()]) = T@ULONGLONG() :- @e.type := T.
+	typeOfType(_, e@[Unsigned(), Long(), Long(), Int()]) = T@ULONGLONG() :- @e.type := T.
+
+	// float
+	typeOfType(_, e@[Float()]) = T@FLOAT() :- @e.type := T.
+
+	// double
+	typeOfType(_, e@[Double()]) = T@DOUBLE() :- @e.type := T.
+
+	// long double
+	typeOfType(_, e@[Long(), Double()]) = T@LONGDOUBLE() :- @e.type := T.
+
+	// _Bool
+	typeOfType(_, e@[Bool()]) = T@BOOL() :- @e.type := T.
+
+	// _Complex
+	typeOfType(_, e@[t1, Complex()]) = T@COMPLEX(SUB) :-
+		complexSubtype([t1]) == SUB,
+		@e.type := T.
+	typeOfType(_, e@[t1, t2, Complex()]) = T@COMPLEX(SUB) :-
+		complexSubtype([t1, t2]) == SUB,
+		@e.type := T.
+
+	// _ Imaginary
+	typeOfType(_, e@[t1, Imaginary()]) = T@IMAGINARY(SUB) :-
+		complexSubtype([t1]) == SUB,
+		@e.type := T.
+	typeOfType(_, e@[t1, t2, Imaginary()]) = T@IMAGINARY(SUB) :-
+		complexSubtype([t1, t2]) == SUB,
+		@e.type := T.
+
+	// TODO _Atomic
+	// TODO struct
+	// TODO union
+	// TODO enum
+
+	// typedef names
+	typeOfType(s, e@[TypedefName(x)]) = T. // TODO perform lookup for 'x'
+
+rules // type helpers
+	// Only permit float, double and long double as complex types
+	complexSubtype : list(TypeSpecifier) -> TYPE
+	complexSubtype([Float(), _]) = FLOAT().
+	complexSubtype([Double(), _]) = DOUBLE().
+	complexSubtype([Long(), Double(), _]) = LONGDOUBLE().
 
 rules
   extDeclOk : scope * ExternalDeclaration
