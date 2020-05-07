@@ -25,6 +25,37 @@ rules // multi-file entry point
 
   fileOk(s, _).
 
+signature
+  sorts TYPE constructors
+  VOID 					: TYPE
+  CHAR 					: TYPE
+  SCHAR 				: TYPE
+  UCHAR 				: TYPE
+  SHORT 				: TYPE
+  USHORT 				: TYPE
+  INT 					: TYPE
+  UINT 					: TYPE
+  LONG 					: TYPE
+  ULONG 				: TYPE
+  LONGLONG 				: TYPE
+  ULONGLONG 			: TYPE
+  FLOAT 				: TYPE
+  DOUBLE 				: TYPE
+  LONGDOUBLE 			: TYPE
+  BOOL 					: TYPE
+  FLOATCOMPLEX 			: TYPE
+  DOUBLECOMPLEX 		: TYPE
+  LONGDOUBLECOMPLEX 	: TYPE
+  // TODO struct/union
+  // TODO enum
+  // TODO others (atomic, imaginary)?
+
+  // TODO type qualifiers
+
+
+rules // typing  rules
+  typeOfType : scope * TypeSpecifier -> TYPE
+
 rules
   extDeclOk : scope * ExternalDeclaration
   extDeclListOk maps extDeclOk(*, list(*))
