@@ -48,7 +48,7 @@ lexical syntax
 lexical restrictions
   FLOAT -/- [0-9fFlLeE]
   
-sorts CharacterConstant CHAR CharChar
+sorts CharacterConstant CHAR // CharChar
 context-free syntax
   CharacterConstant.Char = CHAR 
 lexical syntax 
@@ -58,7 +58,7 @@ lexical syntax
   CharChar = "\\ooo"
   CharChar = "\\x" [0-9a-fA-F] [0-9a-fA-F]
 
-sorts STRING StringChar BackSlashChar
+sorts STRING // StringChar BackSlashChar
 lexical syntax // strings
   STRING     = [L]? "\"" StringChar* "\"" 
   StringChar = ~[\"\n] 
