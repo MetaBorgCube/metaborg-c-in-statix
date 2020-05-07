@@ -2,6 +2,6 @@ static _Atomic A *b;
 
 _Noreturn void exit(int);
 
-int main(void) {
-  A *b;
+int main(int argc, char **argv) {
+  return ((argc | 1) == 1) || argc == 2;
 }
