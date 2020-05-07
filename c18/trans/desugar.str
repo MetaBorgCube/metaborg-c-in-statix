@@ -1,77 +1,10 @@
 module desugar
 
 imports
-
-  src-gen/signatures/c-lexical-sig
-  src-gen/signatures/c-preprocessor-sig
-  src-gen/signatures/c-syntax-sig
-  src-gen/signatures/c18-sig
-  libstratego-lib
+  signatures/c-syntax-sig
+  desugar-signatures
   
-signature
-  sorts
-    BinExp
-    UnExp
-  constructors
-    BinExp : BinOp * Exp * Exp -> Exp
-    UnExp : UnOp * Exp -> Exp
-    
-    Comma : BinOp
-    
-    AssignNorm : BinOp
-    AssignMul : BinOp
-    AssignDiv : BinOp
-    AssignMod : BinOp
-    AssignAdd : BinOp
-    AssignMin : BinOp
-    AssignLsh : BinOp
-    AssignRsh : BinOp
-    AssignAnd : BinOp
-    AssignPow : BinOp
-    AssignOr : BinOp
-    
-    LOr : BinOp
-    LAnd : BinOp
-    Ior : BinOp
-    Eor : BinOp
-    And : BinOp
-    
-    Add : BinOp
-    Sub : BinOp
-    Mul : BinOp
-    Div : BinOp
-    Mod : BinOp
-    
-    Lshift : BinOp
-    Rshift : BinOp
-    
-    Eq : BinOp
-    Neq : BinOp
-    Lt : BinOp
-    Gt : BinOp
-    Leq : BinOp
-    Geq : BinOp
-    
-    PreInc : UnOp
-    PreDec : UnOp
-    UnOp : UnOp
-    Sizeof : UnOp
-    SizeofT : UnOp
-    Alignof : UnOp
-    AlignofT : UnOp
-    Subscript : UnOp
-    PostInc : UnOp
-    PostDec : UnOp
-    
-    Addr : UnOp
-    Deref : UnOp
-    Uplus : UnOp
-    Umin : UnOp
-    Tilde : UnOp
-    Not : UnOp
-    
-    UnOp : UnOp
-        
+  libstratego-lib  
     
 rules
 
