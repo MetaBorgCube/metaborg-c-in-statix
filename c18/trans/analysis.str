@@ -5,6 +5,8 @@ imports
   statixruntime
   statix/api
 
+  injections/-
+
   pp
 
 rules // Analysis
@@ -12,10 +14,13 @@ rules // Analysis
   // see README.md for details on how to switch to multi-file analysis
 
   // single-file analysis
-  editor-analyze = stx-editor-analyze(id|"statics", "programOk")
+  editor-analyze = stx-editor-analyze(pre-analyze, post-analyze|"statics", "programOk")
   
   // multi-file analysis
 //  editor-analyze = stx-editor-analyze(id|"statics", "projectOk", "fileOk")
+
+  pre-analyze = explicate-injections-c18
+  post-analyze = strip-annos; implicate-injections-c18
 
 rules // Editor Services
 

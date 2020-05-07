@@ -1,5 +1,11 @@
 module statics
 
+imports
+  signatures/c18-sig
+  signatures/c-syntax-sig
+  signatures/c-lexical-sig
+  signatures/c-preprocessor-sig
+
 // see README.md for details on how to switch to multi-file analysis
 
 rules // single-file entry point
