@@ -11,8 +11,9 @@ imports
 rules // single-file entry point
 
   programOk : Start
-
-  programOk(_).
+  programOk(TranslationUnit2Start(TranslationUnit(extDecls))) :- {s}
+    new s,
+    extDeclListOk(s, extDecls).
 
 rules // multi-file entry point
 
@@ -22,9 +23,20 @@ rules // multi-file entry point
 
   fileOk : scope * Start
 
-  fileOk(s, Empty()).
+  fileOk(s, _).
 
-signature
+rules
+  extDeclOk : scope * ExternalDeclaration
+  extDeclListOk maps extDeclOk(*, list(*))
+  extDeclOk(s, FunctionDefinition2ExternalDeclaration(funDef)) :-
+	funDefOk(s, funDef).
+  extDeclOk(s, Declaration2ExternalDeclaration(decl)) :-
+	declOk(s, decl).
 
-  sorts Start constructors
-    Empty : Start
+  // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
+  funDefOk : scope * FunctionDefinition
+  funDefOk(s, FunDef(declSpecs, declarator, decls, compStmt)).
+
+  // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
+  declOk : scope * Declaration
+  declOk(s, Decl(declSpecs, initDecls)).
