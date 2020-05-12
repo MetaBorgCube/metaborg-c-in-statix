@@ -403,7 +403,6 @@ lexical restrictions
   "+" -/- [\+]
   "-" -/- [\-]
   
-
-
-
-
+template options
+  ID = keyword {reject}
+  TypeID = keyword {reject}
