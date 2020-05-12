@@ -28,12 +28,12 @@ context-free syntax // integer constants
   IntegerConstant.OctInt = OctInt 
   IntegerConstant.HexInt = HexInt 
 lexical syntax
-  DecInt = [0] LongUnsiged?
-  DecInt = [1-9][0-9]* LongUnsiged?
-  OctInt = [0][0-7]+ LongUnsiged?
-  HexInt = [0][xX][0-9a-fA-F]+ LongUnsiged?
-  LongUnsiged = [uU] [lL]?
-  LongUnsiged = [lL] [uU]? 
+  DecInt = [0] LongUnsigned?
+  DecInt = [1-9][0-9]* LongUnsigned?
+  OctInt = [0][0-7]+ LongUnsigned?
+  HexInt = [0][xX][0-9a-fA-F]+ LongUnsigned?
+  LongUnsigned = [uU] [lL]?
+  LongUnsigned = [lL] [uU]? 
 lexical restrictions
   DecInt -/- [0-9uUlL]
   OctInt -/- [0-7uUlL]
