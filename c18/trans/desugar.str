@@ -3,12 +3,13 @@ module desugar
 imports
   signatures/c-syntax-sig
   desugar-signatures
+  decl-specs
   
   libstratego-lib  
     
 rules
 
-  desugar-all = topdown(try(desugar))
+  desugar-all = topdown(try(desugar)); sort-decl-spec-all
   
   desugar: Comma(a, b) -> BinExp(Comma(), a, b)
   

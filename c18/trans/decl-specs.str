@@ -1,0 +1,75 @@
+module decl-specs
+
+imports
+  signatures/c-syntax-sig
+  
+  libstratego-lib
+  
+signature
+  sorts 
+    DeclSpec
+    
+  constructors
+    AlignasConstexpr : DeclSpec
+    AlignasType : DeclSpec
+    StructOrUnion : DeclSpec
+    StructOrUnionDecl : DeclSpec
+    TypedefName : DeclSpec
+    
+    
+rules
+
+  simplify-decl-spec: AlignasConstexpr(_) -> AlignasConstexpr()
+  simplify-decl-spec: AlignasType(_) -> AlignasType()
+  simplify-decl-spec: StructOrUnion(_, _, _) -> StructOrUnion()
+  simplify-decl-spec: StructOrUnionDecl(_, _) -> StructOrUnionDecl() 
+  simplify-decl-spec: TypedefName(_) -> TypedefName()
+
+strategies
+
+  spec-order = ![
+    Typedef(),
+    Static(),
+    Extern(),
+    ThreadLocal(),
+    Inline(),
+    NoReturn(),
+    AlignasConstexpr(),
+    AlignasType(),
+    Auto(),
+    Register(),
+    Const(),
+    Volatile(),
+    Atomic(),
+    Signed(),
+    Unsigned(),
+    Void(),
+    Char(),
+    Short(),
+    Long(),
+    Int(),
+    Float(),
+    Double(),
+    Complex(),
+    Imaginary(),
+    Bool(),
+    StructOrUnion(),
+    StructOrUnionDecl(),
+    TypedefName(),
+    Restrict()
+  ]
+  
+  // Compare two declaration specifiers by
+  // - simplyfing complex terms to singletons
+  // - looking up their indices in the above list
+  // - comparing the indices
+  decl-spec-lt = ?(a, b); <lt> (
+    <get-index> (<try(simplify-decl-spec)> a, <spec-order>), 
+    <get-index> (<try(simplify-decl-spec)> b, <spec-order>))
+    
+  
+rules
+
+  sort-decl-spec-all = topdown(try(sort-decl-spec))
+  
+  sort-decl-spec: Decl(s, i) -> Decl(<qsort(decl-spec-lt)> s, i)
