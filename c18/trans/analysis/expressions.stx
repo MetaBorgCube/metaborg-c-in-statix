@@ -1,0 +1,13 @@
+module analysis/expressions
+
+imports
+  analysis/types
+  desugar-signatures
+
+rules typeOfExp : scope * Exp -> TYPE
+
+  // TODO: do something with U/L/LL/UL/LU/LLU/ULL suffixes
+  typeOfExp(_, Constant2Exp(IntegerConstant2Constant(_))) = INT().
+  
+  typeOfExp(s, BinExp(Add(), Ta, Tb)) = T :-
+    lub(typeOfExp(s, Ta), typeOfExp(s, Tb)) == T.
