@@ -2,6 +2,7 @@ module desugar
 
 imports
   signatures/c-syntax-sig
+  signatures/c-lexical-sig
   desugar-signatures
   decl-specs
   
