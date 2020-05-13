@@ -1,0 +1,23 @@
+module analysis/statements
+
+imports
+  signatures/c-syntax-sig
+  analysis/expressions
+  analysis/types
+
+rules
+  compStmtOk : scope * CompoundStatement
+  compStmtOk(s, Compound(blockItems)) :-
+    blockItemsOk(s, blockItems).
+  compStmtOk(s, compStmt) :-
+    stmtOk(s, CompoundStatement2Statement(compStmt)).
+  compStmtOk(s, _).
+  
+  stmtOk : scope * Statement
+  stmtOk(s, Return(e)) :- {T}
+    typeOfExp(s, e) == T | error "Expression type should equal return specifier".
+
+  blockItemOk : scope * BlockItem
+  blockItemsOk maps blockItemOk(*, list(*))
+  blockItemOk(s, _).
+  

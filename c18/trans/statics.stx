@@ -6,6 +6,7 @@ imports
   signatures/c-lexical-sig
   signatures/c-preprocessor-sig
   
+  analysis/declarations
   analysis/types
 
 // see README.md for details on how to switch to multi-file analysis
@@ -13,9 +14,8 @@ imports
 rules // single-file entry point
 
   programOk : Start
-  programOk(TranslationUnit2Start(TranslationUnit(extDecls))) :- {s}
-    new s,
-    extDeclListOk(s, extDecls).
+  programOk(TranslationUnit2Start(t)) :-
+    translationUnitOk(t).
 
 rules // multi-file entry point
 
@@ -27,18 +27,3 @@ rules // multi-file entry point
 
   fileOk(s, _).
 
-rules
-  extDeclOk : scope * ExternalDeclaration
-  extDeclListOk maps extDeclOk(*, list(*))
-  extDeclOk(s, FunctionDefinition2ExternalDeclaration(funDef)) :-
-	funDefOk(s, funDef).
-  extDeclOk(s, Declaration2ExternalDeclaration(decl)) :-
-	declOk(s, decl).
-
-  // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
-  funDefOk : scope * FunctionDefinition
-  funDefOk(s, FunDef(declSpecs, declarator, decls, compStmt)).
-
-  // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
-  declOk : scope * Declaration
-  declOk(s, Decl(declSpecs, initDecls)).

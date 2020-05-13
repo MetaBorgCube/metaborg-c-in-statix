@@ -1,0 +1,27 @@
+module analysis/declarations
+
+imports
+  signatures/c-syntax-sig
+  analysis/statements
+
+rules
+  translationUnitOk : TranslationUnit
+  translationUnitOk(TranslationUnit(extDecls)) :- {s}
+    new s,
+    extDeclListOk(s, extDecls).
+
+  extDeclOk : scope * ExternalDeclaration
+  extDeclListOk maps extDeclOk(*, list(*))
+  extDeclOk(s, FunctionDefinition2ExternalDeclaration(funDef)) :-
+    funDefOk(s, funDef).
+  extDeclOk(s, Declaration2ExternalDeclaration(decl)) :-
+    declOk(s, decl).
+
+  // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
+  funDefOk : scope * FunctionDefinition
+  funDefOk(s, FunDef(declSpecs, declarator, decls, compStmt)) :-
+    compStmtOk(s, compStmt).
+
+  // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
+  declOk : scope * Declaration
+  declOk(s, Decl(declSpecs, initDecls)).
