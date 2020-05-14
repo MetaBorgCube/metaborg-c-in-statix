@@ -15,3 +15,7 @@ references
   reference _ : editor-resolve
 
   hover _ : editor-hover
+
+menus
+  menu: "Analysis" (openeditor)
+    action: "Show injections" = explicate-injections-aterm (source)
