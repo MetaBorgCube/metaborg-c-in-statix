@@ -2,6 +2,8 @@ module analysis/statements
 
 imports
   signatures/c-syntax-sig
+  
+  analysis/declarations
   analysis/expressions
   analysis/types
 
@@ -9,15 +11,60 @@ rules
   compStmtOk : scope * CompoundStatement
   compStmtOk(s, Compound(blockItems)) :-
     blockItemsOk(s, blockItems).
-  compStmtOk(s, compStmt) :-
-    stmtOk(s, CompoundStatement2Statement(compStmt)).
-  compStmtOk(s, _).
   
   stmtOk : scope * Statement
+  stmtOk(s, Label(id, stmt)) :-
+    stmtOk(s, stmt).
+  stmtOk(_, stmt) :-
+    stmt != Case(_, _) | error "'case' statement not in switch statement" @stmt,
+    stmt != Default(_) | error "'default' statement not in switch statement" @stmt.
+  stmtOk(s, Exp(e)) :- // TODO show warning "expression result unused"
+    typeOfExp(s, e) == _.
+  stmtOk(s, If(e, then)) :- {T}
+    typeOfExp(s, e) == _, // TODO all types allowed?
+    stmtOk(s, then).
+  stmtOk(s, IfElse(e, then, else)) :- {T}
+    typeOfExp(s, e) == _, // TODO all types allowed?
+    stmtOk(s, then),
+    stmtOk(s, else).
+  stmtOk(s, Switch(e, case)) :- {T} // TODO switch should not accept _Bool, which is an int type now.
+    typeOfExp(s, e) == T,
+    intType(T) | error $[statement requires expression of integer type ('[T]' invalid)] @e, // switch should have int type
+    switchCaseOk(s, T, Statement2BlockItem(case)).
+  stmtOk(s, Switch(e, CompoundStatement2Statement(Compound(cases)))) :- {T}
+    typeOfExp(s, e) == T,
+    intType(T) | error $[statement requires expression of integer type ('[T]' invalid)] @e, // switch should have int type
+    switchCasesOk(s, T, cases).
+  stmtOk(s, While(e, body)) :-
+    typeOfExp(s, e) == _,
+    stmtOk(s, body).
+  stmtOk(s, DoWhile(body, e)) :-
+    typeOfExp(s, e) == _,
+    stmtOk(s, body).
+  stmtOk(s, For(init, e1, e2, body)) :- {T1 T2}
+    initClauseOk(s, init),
+    typeOfExp(s, e1) == T1,
+    intType(T1), // TODO condition should be intType?
+    typeOfExp(s, e2) == _. // TODO type does not matter?
+  stmtOk(s, Goto(id)). // TODO check if label with 'id' exists
   stmtOk(s, Return(e)) :- {T}
     typeOfExp(s, e) == T | error "Expression type should equal return specifier".
+  stmtOk(s, CompoundStatement2Statement(compStmt)) :-
+    compStmtOk(s, compStmt).
 
   blockItemOk : scope * BlockItem
   blockItemsOk maps blockItemOk(*, list(*))
-  blockItemOk(s, _).
+  blockItemOk(s, Declaration2BlockItem(decl)) :-
+    declOk(s, decl).
+  blockItemOk(s, Statement2BlockItem(stmt)) :-
+    stmtOk(s, stmt).
+  
+  switchCaseOk : scope * TYPE * BlockItem
+  switchCasesOk maps switchCaseOk(*, *, list(*))
+  switchCaseOk(s, T, Statement2BlockItem(Case(Exp2ConstExp(e), stmt))) :- {Te} // Check if const matches switch type
+    stmtOk(s, stmt),
+    typeOfExp(s, e) == Te,
+    lub(T, Te) == T.
+  switchCaseOk(s, _, Statement2BlockItem(Default(stmt))) :-
+    stmtOk(s, stmt).
   

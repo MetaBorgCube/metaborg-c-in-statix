@@ -2,7 +2,10 @@ module analysis/declarations
 
 imports
   signatures/c-syntax-sig
+  
+  analysis/expressions
   analysis/statements
+  analysis/types
 
 rules
   translationUnitOk : TranslationUnit
@@ -21,7 +24,26 @@ rules
   funDefOk : scope * FunctionDefinition
   funDefOk(s, FunDef(declSpecs, declarator, decls, compStmt)) :-
     compStmtOk(s, compStmt).
+    
+  initClauseOk : scope * InitClause
+  initClauseOk(s, Exp2InitClause(e)) :-
+    typeOfExp(s, e) == _. // TODO more constraints on this?
+  initClauseOk(s, ForInitDecl(declSpecs, initDeclrtrs)) :- {t T}
+    declSpecs == [TypeSpecifier2DeclarationSpecifier(t)],
+    typeOfType(s, [t]) == T, // specified type
+    initDeclrtrsOk(s, T, initDeclrtrs).
+  
+  initDeclrtrOk : scope * TYPE * InitDeclarator
+  initDeclrtrsOk maps initDeclrtrOk(*, *, list(*))
+  initDeclrtrOk(s, T, InitDecl(decltr, init)).
+  initDeclrtrOk(s, T, Declarator2InitDeclarator(decl)) :-
+    declrtrOk(s, T, decl).
+  
+  declrtrOk : scope * TYPE * Declarator
+  // TODO Handle A LOT of other cases
+  // Probably pass type from above and declare the variable in this rule
+  declrtrOk(s, T, Declarator(None, IdDecl(ID-LEX2ID(id)))).
 
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
-  declOk(s, Decl(declSpecs, initDecls)).
+//  declOk(s, Decl(declSpecs, initDecls)).
