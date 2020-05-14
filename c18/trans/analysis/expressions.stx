@@ -5,10 +5,16 @@ imports
 
   desugar-signatures
 
-rules typeOfExp : scope * Exp -> TYPE
+rules
+  typeOfExp : scope * Exp -> TYPE
+  typeOfExps maps typeOfExp(*, list(*)) = list(*)
 
   // TODO: do something with U/L/LL/UL/LU/LLU/ULL suffixes
   typeOfExp(_, Constant2Exp(IntegerConstant2Constant(_))) = INT().
+  typeOfExp(_, Constant2Exp(CharacterConstant2Constant(_))) = INT().
+  typeOfExp(_, Constant2Exp(FloatingConstant2Constant(_))) = FLOAT().
+//  typeOfExp(_, String(_)) = STRING().
+  typeOfExp(_, LChar(_)) = CHAR().
 
   typeOfExp(s, UnExp(op, e)) = T :- {Te}
     typeOfExp(s, e) == Te,
@@ -19,6 +25,20 @@ rules typeOfExp : scope * Exp -> TYPE
     typeOfExp(s, e2) == T2,
     typeOfBinExp(op, T1, T2) == T.
 
+//  typeOfExp(s, Call(callee, args)) = Tr :- {Ta Ta'}
+//    typeOfExp(s, callee) == FUNC(Ta, Tr), // i.e. int -> int
+//    typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
+//    Ta' == Ta.
+//  typeOfExp(s, Proj(e, ID-LEX2ID(id))) = T :-
+//    // lookup scope (type) of e
+//    // find 'id' in scope and unify with T
+//  typeOfExp(s, DerefProj(e, ID-LEX2ID(id))) = T :-
+//    // lookup scope (type) of e
+//    // find 'id' in scope and unify with T
+//  typeOfExp(s, Var(ID-LEX2ID(id))) = INT().
+//    // lookup var type in scope
+
+rules
   typeOfBinExp : BinOp * TYPE * TYPE -> TYPE
   typeOfBinExp(Comma(), T1, T2) = T :-
     T1 == T2. // TODO check
@@ -71,6 +91,7 @@ rules typeOfExp : scope * Exp -> TYPE
     intType(T1),
     intType(T2).
 
+rules
   typeOfUnExp : UnOp * TYPE -> TYPE
   typeOfUnExp(PreInc(), T) = T :-
     numberType(T).
@@ -94,6 +115,7 @@ rules
     lub(T1, T2) == T,
     intType(T).
 
+rules
   numberRules : TYPE * TYPE -> TYPE
   numberRules(T1, T2) = intRules(T1, T2).
   numberRules(T, T) = T :-
