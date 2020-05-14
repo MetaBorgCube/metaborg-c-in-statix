@@ -148,7 +148,15 @@ rules intType : TYPE
   intType(LONGLONG()).
   intType(T) :- {ST}
     signEquiv(ST, T).
-	
+
+rules numberType : TYPE
+  numberType(FLOAT()).
+  numberType(DOUBLE()).
+  numberType(LONGDOUBLE()).
+  numberType(COMPLEX(_)).
+  numberType(IMAGINARY(_)).
+  numberType(T) :-
+    intType(T).
 	
 rules signEquiv : TYPE * TYPE
 

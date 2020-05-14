@@ -2,12 +2,99 @@ module analysis/expressions
 
 imports
   analysis/types
+
   desugar-signatures
 
 rules typeOfExp : scope * Exp -> TYPE
 
   // TODO: do something with U/L/LL/UL/LU/LLU/ULL suffixes
   typeOfExp(_, Constant2Exp(IntegerConstant2Constant(_))) = INT().
+
+  typeOfExp(s, UnExp(op, e)) = T :- {Te}
+    typeOfExp(s, e) == Te,
+    typeOfUnExp(op, Te) == T.
   
-  typeOfExp(s, BinExp(Add(), Ta, Tb)) = T :-
-    lub(typeOfExp(s, Ta), typeOfExp(s, Tb)) == T.
+  typeOfExp(s, BinExp(op, e1, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    typeOfBinExp(op, T1, T2) == T.
+
+  typeOfBinExp : BinOp * TYPE * TYPE -> TYPE
+  typeOfBinExp(Comma(), T1, T2) = T :-
+    T1 == T2. // TODO check
+  typeOfBinExp(AssignOp(), T1, T2) = T :-
+    lub(T1, T2) == T1.
+  typeOfBinExp(LOr(), T1, T2) = INT() :-
+    intType(T1),
+    intType(T2).
+  typeOfBinExp(LAnd(), T1, T2) = INT() :- // &&
+    intType(T1),
+    intType(T2).
+  typeOfBinExp(Ior(), T1, T2) = T :-
+    lub(T1, T2) == T,
+    intType(T). // TODO No enums?
+  typeOfBinExp(Eor(), T1, T2) = T :-
+    lub(T1, T2) == T,
+    intType(T). // TODO No enums?
+  typeOfBinExp(And(), T1, T2) = T :- // &
+    lub(T1, T2) == T,
+    intType(T).
+
+  typeOfBinExp(Add(), T1, T2) = T :-
+    numberRules(T1, T2) == T.
+  typeOfBinExp(Sub(), T1, T2) = T :-
+    numberRules(T1, T2) == T.
+  typeOfBinExp(Mul(), T1, T2) = T :-
+    numberRules(T1, T2) == T.
+  typeOfBinExp(Div(), T1, T2) = numberRules(T1, T2).
+  typeOfBinExp(Mod(), T1, T2) = intRules(T1, T2).
+
+  typeOfBinExp(Lshift(), T1, T2) = intRules(T1, T2).
+  typeOfBinExp(Rshift(), T1, T2) = intRules(T1, T2).
+
+  typeOfBinExp(Eq(), T1, T2) = INT() :-
+    intType(T1),
+    intType(T2).
+  typeOfBinExp(Neq(), T1, T2) = INT() :-
+    intType(T1),
+    intType(T2).
+  typeOfBinExp(Lt(), T1, T2) = INT() :-
+    intType(T1),
+    intType(T2).
+  typeOfBinExp(Gt(), T1, T2) = INT() :-
+    intType(T1),
+    intType(T2).
+  typeOfBinExp(Leq(), T1, T2) = INT() :-
+    intType(T1),
+    intType(T2).
+  typeOfBinExp(Geq(), T1, T2) = INT() :-
+    intType(T1),
+    intType(T2).
+
+  typeOfUnExp : UnOp * TYPE -> TYPE
+  typeOfUnExp(PreInc(), T) = T :-
+    numberType(T).
+  typeOfUnExp(PreDec(), T) = T :-
+    numberType(T).
+//  typeOfUnExp(UnaryOp(), T). TODO
+  typeOfUnExp(Sizeof(), _) = ULONGLONG. // actually size_t
+  typeOfUnExp(SizeofT(), _) = ULONGLONG. // actually size_t
+  typeOfUnExp(Alignof(), _) = ULONGLONG. // actually size_t
+  typeOfUnExp(AlignofT(), _) = ULONGLONG. // actually size_t
+//  typeOfUnExp(Subscript(), Te) = T :- // TODO if |-Te = int[], |-T=int
+  typeOfUnExp(PostInc(), T) = T :-
+    numberType(T).
+  typeOfUnExp(PostDec(), T) = T :-
+    numberType(T).
+//  typeOfUnExp(UnOp(), T). TODO
+
+rules
+  intRules : TYPE * TYPE -> TYPE
+  intRules(T1, T2) = T :-
+    lub(T1, T2) == T,
+    intType(T).
+
+  numberRules : TYPE * TYPE -> TYPE
+  numberRules(T1, T2) = intRules(T1, T2).
+  numberRules(T, T) = T :-
+    numberType(T).
