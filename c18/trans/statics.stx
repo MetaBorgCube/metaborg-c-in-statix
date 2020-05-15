@@ -7,7 +7,6 @@ imports
   signatures/c-preprocessor-sig
   
   analysis/declarations
-  analysis/types
 
 // see README.md for details on how to switch to multi-file analysis
 
@@ -26,19 +25,3 @@ rules // multi-file entry point
   fileOk : scope * Start
 
   fileOk(s, _).
-
-signature
-  namespaces
-    Var      : ID
-    Function : ID
-    Typedef  : ID
-    Return   : TYPE
-
-  relations
-    type : occurrence -> TYPE
-
-  name-resolution labels P
-    resolve Var filter P* min $ < P
-    resolve Function min $ < P
-    resolve Typedef filter P* min $ < P
-    resolve Return

@@ -7,7 +7,27 @@ imports
   analysis/statements
   analysis/types
 
-  statics
+signature
+  namespaces
+    Var      : ID
+    Function : ID
+    Typedef  : ID
+
+    Return   :
+
+    Label    : ID
+
+  relations
+    type : occurrence -> TYPE
+
+  name-resolution labels P
+    resolve Var filter P* min $ < P
+    resolve Function min $ < P
+    resolve Typedef filter P* min $ < P
+
+    resolve Return
+
+    resolve Label // TODO should always be in top-level scope?
 
 rules
   translationUnitOk : TranslationUnit
