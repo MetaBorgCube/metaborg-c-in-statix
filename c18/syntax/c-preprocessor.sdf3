@@ -27,6 +27,7 @@ sorts PreprocessorDirective ExternalDeclaration // (already defined in c-syntax)
 context-free syntax
 
   ExternalDeclaration = PreprocessorDirective
+  PreprocessorDirective.Dummy = "%%%%%"
   
 context-free restrictions
 
