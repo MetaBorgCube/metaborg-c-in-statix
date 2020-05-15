@@ -76,7 +76,7 @@ rules
   declrtrOk : scope * Declarator -> ID
   // TODO Handle A LOT of other cases
   // Probably pass type from above and declare the variable in this rule
-  declrtrOk(s, Declarator(None, IdDecl(id))) = id.
+  declrtrOk(s, Declarator(NoPointer(), IdDecl(id))) = id.
 
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration

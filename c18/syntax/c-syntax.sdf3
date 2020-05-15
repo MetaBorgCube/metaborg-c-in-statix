@@ -70,6 +70,10 @@ context-free syntax
   AlignmentSpecifier.AlignasConstexpr = <_Alignas(<ConstExp>)>
   AlignmentSpecifier.AlignasType = <_Alignas(<DirectDeclarator>)>
 
+sorts StructDeclarator-OPT
+context-free syntax
+  StructDeclarator-OPT                    = StructDeclarator
+  StructDeclarator-OPT.NoStructDeclarator = <>
 
 sorts StaticAssert StructOrUnionSpecifier StructOrUnion InitDeclarator StructDeclaration SpecifierQualifier
 	  StructDeclarator EnumSpecifier
@@ -79,7 +83,7 @@ context-free syntax
   StaticAssert.StaticAssert = <_Static_assert(<ConstExp>, <STRING>)>
   
   StructOrUnionSpecifier.StructOrUnion = <
-    <StructOrUnion> <TypeID?> { 
+    <StructOrUnion> <TypeID-OPT> {
       <StructDeclaration+> 
     }
   > 
@@ -109,11 +113,11 @@ context-free syntax
   StructDeclarator = Declarator 
   
   StructDeclarator.StructDeclor = <
-    <StructDeclarator?> : <ConstExp>
+    <StructDeclarator-OPT> : <ConstExp>
   > 
   
   EnumSpecifier.EnumSpec = <
-    enum <TypeID?> { 
+    enum <TypeID-OPT> {
       <{Enumerator ", "}+> 
     }
   > 
@@ -121,6 +125,16 @@ context-free syntax
     enum <TypeID>
   > 
 
+sorts DirectDeclarator-OPT ParameterTypeList-OPT Pointer-OPT
+context-free syntax
+  DirectDeclarator-OPT                    = DirectDeclarator
+  DirectDeclarator-OPT.NoDirectDeclarator = <>
+
+  ParameterTypeList-OPT                     = ParameterTypeList
+  ParameterTypeList-OPT.NoParameterTypeList = <>
+
+  Pointer-OPT           = Pointer
+  Pointer-OPT.NoPointer = <>
 
 sorts Enumerator Declarator DirectDeclarator ParameterTypeList ParameterDeclaration Initializer TypeName Pointer
 
@@ -132,19 +146,19 @@ context-free syntax
   > 
   
   Declarator.Declarator = <
-    <Pointer?> <DirectDeclarator>
+    <Pointer-OPT> <DirectDeclarator>
   > 
   
   DirectDeclarator.IdDecl = ID 
   DirectDeclarator.DeclBracket = <(<Declarator>)> 
-  DirectDeclarator.ArrayDecl = <<DirectDeclarator> [<ConstExp?>]> 
+  DirectDeclarator.ArrayDecl = <<DirectDeclarator> [<ConstExp-OPT>]>
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
   
   ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}+>> 
   ParameterTypeList.ParamListVarArgs = <<{ParameterDeclaration ", "}+> , ...> 
   ParameterDeclaration.ParamDecl1 = <<DeclarationSpecifier+> <Declarator>> 
-  ParameterDeclaration.ParamDecl2 = <<DeclarationSpecifier+> <AbstractDeclarator?>> 
-  
+  ParameterDeclaration.ParamDecl2 = <<DeclarationSpecifier+> <AbstractDeclarator-OPT>>
+
   Initializer = AssignExp 
   
   Initializer.Initializer = <
@@ -163,6 +177,17 @@ context-free syntax
   Pointer.Pointer = <* <TypeQualifier*>> 
   Pointer.PointerN = <* <TypeQualifier*> <Pointer>>
 
+sorts AbstractDeclarator-OPT DirectAbstractDeclarator-OPT InitClause-OPT
+context-free syntax
+  AbstractDeclarator-OPT                      = AbstractDeclarator
+  AbstractDeclarator-OPT.NoAbstractDeclarator = <>
+
+  DirectAbstractDeclarator-OPT                            = DirectAbstractDeclarator
+  DirectAbstractDeclarator-OPT.NoDirectAbstractDeclarator = <>
+
+  InitClause-OPT = InitClause
+  InitClause-OPT.NoInitClause = <>
+
 sorts AbstractDeclarator DirectAbstractDeclarator Statement BlockItem CompoundStatement InitClause
 
 context-free syntax
@@ -170,17 +195,17 @@ context-free syntax
   AbstractDeclarator = Pointer 
   
   AbstractDeclarator.DirDecl = <
-    <Pointer?> <DirectAbstractDeclarator>
+    <Pointer-OPT> <DirectAbstractDeclarator>
   > 
-  
+
   DirectAbstractDeclarator.AbsDecl = <
     (<AbstractDeclarator>)
   > 
   DirectAbstractDeclarator.AArrayDecl = <
-    <DirectAbstractDeclarator?>[<ConstExp>]
+    <DirectAbstractDeclarator-OPT>[<ConstExp>]
   > 
   DirectAbstractDeclarator.AFunDecl = <
-    <DirectAbstractDeclarator?>(<ParameterTypeList?>)
+    <DirectAbstractDeclarator-OPT>(<ParameterTypeList-OPT>)
   > 
   
   Statement.Label   = <<ID> : <Statement>> 
@@ -224,7 +249,7 @@ context-free syntax
     while(<Exp>);
   > 
   Statement.For = <
-    for(<InitClause?>; <Exp?>; <Exp?>) 
+    for(<InitClause-OPT>; <Exp-OPT>; <Exp-OPT>)
       <Statement>
   > 
   Statement.Goto = <
@@ -232,8 +257,8 @@ context-free syntax
   > 
   Statement.Continue = <continue;> 
   Statement.Break    = <break;> 
-  Statement.Return   = <return <Exp?>;> 
-  
+  Statement.Return   = <return <Exp-OPT>;>
+
   InitClause = Exp
   InitClause.ForInitDecl = <<DeclarationSpecifier+> <{InitDeclarator ", "}*>>
 
@@ -241,8 +266,11 @@ context-free syntax
 //
 //  Start = Exp 
 
-sorts Exp
+sorts Exp Exp-OPT
 context-free syntax
+
+  Exp-OPT       = Exp
+  Exp-OPT.NoExp = <>
 
   Exp.Comma = <<Exp> , <Exp>> {left}
   
@@ -291,9 +319,12 @@ context-free syntax
   Exp.LChar     = CHAR
   Exp           = <(<Exp>)> {bracket}
 
-sorts ConstExp AssignExp
+sorts ConstExp ConstExp-OPT AssignExp
 
 context-free syntax
+
+  ConstExp-OPT = ConstExp
+  ConstExp-OPT.NoConstExp = <>
 
   ConstExp  = Exp 
   AssignExp = Exp 

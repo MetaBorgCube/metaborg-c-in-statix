@@ -10,6 +10,11 @@ context-free syntax
 //  
 //  EnumerationConstant.Enum = ID
 
+sorts TypeID-OPT
+context-free syntax
+  TypeID-OPT          = TypeID
+  TypeID-OPT.NoTypeID = <>
+
 lexical sorts ID TypeID
 lexical syntax // identifiers
   ID   	 = [a-z] [a-zA-Z0-9\_]*

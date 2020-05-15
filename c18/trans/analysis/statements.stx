@@ -43,7 +43,7 @@ rules
   stmtOk(s, DoWhile(body, e)) :-
     typeOfExp(s, e) == _,
     stmtOk(s, body).
-  stmtOk(s, For(init, e1, e2, body)) :- {s_for T}
+  stmtOk(s, For(InitClause2InitClause-OPT(init), Exp2Exp-OPT(e1), Exp2Exp-OPT(e2), body)) :- {s_for T}
     new s_for,
     s_for -P-> s,
     initClauseOk(s_for, init),
@@ -51,10 +51,12 @@ rules
     intType(T), // TODO condition should be intType?
     typeOfExp(s_for, e2) == _. // TODO type does not matter?
   stmtOk(s, Goto(id)). // TODO check if label with 'id' exists
-  stmtOk(s, Return(e)) :- {T Tr}
+  stmtOk(s, Return(Exp2Exp-OPT(e))) :- {T Tr}
     typeOfExp(s, e) == T,
     type of Return{} in s |-> [(_, (Return{}, Tr))],
     T == Tr | error "Expression type should equal return specifier".
+  stmtOk(s, Return(NoExp())) :-
+    type of Return{} in s |-> [(_, (Return{}, VOID()))] | error "Expression type should equal return specifier".
   stmtOk(s, CompoundStatement2Statement(compStmt)) :-
     compStmtOk(s, compStmt).
 

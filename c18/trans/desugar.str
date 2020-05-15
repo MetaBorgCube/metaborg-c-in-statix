@@ -61,7 +61,7 @@ rules
   desugar: Subscript(a, b) -> UnExp(Deref(), BinExp(Add(), a, b))
   desugar: DerefProj(e, i) -> Proj(UnExp(Deref(), e), i)
   
-  desugar: While(c, s) -> For(None(), c, None(), s) 
+  desugar: While(c, s) -> For(NoInitClause(), c, NoExp(), s)
   desugar: If(c, s) -> IfElse(c, s, Nop())
   
   desugar: PreInc(e) -> BinExp(AssignAdd(), e, DecInt(1))
