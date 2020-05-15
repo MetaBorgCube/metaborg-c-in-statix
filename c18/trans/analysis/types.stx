@@ -3,6 +3,8 @@ module analysis/types
 imports
   signatures/c18-sig
   desugar-signatures
+  
+  analysis/declarations
 
 //signature // to also consider qualifiers 
 // sorts TYPE TSPEC TQUAL constructors
@@ -127,8 +129,7 @@ rules // typing  rules
   // TODO enum
 
   // typedef names
-  typeOfType(s, e@[TypedefName(x)]) = T. // TODO perform lookup for 'x'
-	
+  typeOfType(s, e@[TypedefName1(x)]) = typeOfTypedef(s, x). // TODO perform lookup for 'x'
 rules // type helpers
 	// Only permit float, double and long double as complex types
 	complexSubtype : list(TypeSpecifier) -> TYPE

@@ -57,7 +57,7 @@ context-free syntax
   TypeSpecifier.Imaginary = <_Imaginary>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
-  TypeSpecifier.TypedefName = <<TypeID>>
+  TypeSpecifier.TypedefName1 = <<TypeID>>
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Restrict  = <restrict>
@@ -168,8 +168,8 @@ context-free syntax
     { <{Initializer ", "}+> , }
   > 
   
-  TypeName.TypedefName = <
-    <SpecifierQualifier+> <AbstractDeclarator?>
+  TypeName.TypedefName2 = <
+    <SpecifierQualifier+> <AbstractDeclarator-OPT>
   > 
 
   TypeName = TypeID 
