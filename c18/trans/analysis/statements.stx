@@ -47,8 +47,10 @@ rules
     intType(T1), // TODO condition should be intType?
     typeOfExp(s, e2) == _. // TODO type does not matter?
   stmtOk(s, Goto(id)). // TODO check if label with 'id' exists
-  stmtOk(s, Return(e)) :- {T}
-    typeOfExp(s, e) == T | error "Expression type should equal return specifier".
+  stmtOk(s, Return(e)) :- {T Tr}
+    typeOfExp(s, e) == T,
+    type of Return{} in s |-> [(_, (Return{}, Tr))],
+    T == Tr | error "Expression type should equal return specifier".
   stmtOk(s, CompoundStatement2Statement(compStmt)) :-
     compStmtOk(s, compStmt).
 

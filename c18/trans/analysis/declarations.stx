@@ -44,8 +44,15 @@ rules
 
   // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
   funDefOk : scope * FunctionDefinition
-  funDefOk(s, FunDef(declSpecs, declarator, decls, compStmt)) :-
-    compStmtOk(s, compStmt).
+  funDefOk(s, FunDef(declSpecs, declarator, decls, compStmt)) :- {s_fun id T}
+    declSpecsToType(s, declSpecs) == T,
+    declrtrOk(s, declarator) == id,
+    new s_fun,
+    s_fun -P-> s,
+    s_fun -> Return{} with type T,
+    declsOk(s_fun, decls),
+    compStmtOk(s_fun, compStmt),
+    declareFun(s, id, T).
     
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
@@ -73,6 +80,7 @@ rules
 
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
+  declsOk maps declOk(*, list(*))
   declOk(s, Decl(declSpecs, initDeclrtrs)) :- {ids T}
     declSpecsToType(s, declSpecs) == T, // Assumption: there are *only* type specifiers in here
     initDeclrtrsOk(s, T, initDeclrtrs) == ids,
