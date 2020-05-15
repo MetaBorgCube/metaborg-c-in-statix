@@ -27,3 +27,18 @@ rules // multi-file entry point
 
   fileOk(s, _).
 
+signature
+  namespaces
+    Var      : ID
+    Function : ID
+    Typedef  : ID
+    Return   : TYPE
+
+  relations
+    type : occurrence -> TYPE
+
+  name-resolution labels P
+    resolve Var filter P* min $ < P
+    resolve Function min $ < P
+    resolve Typedef filter P* min $ < P
+    resolve Return

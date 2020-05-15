@@ -2,10 +2,12 @@ module analysis/declarations
 
 imports
   signatures/c-syntax-sig
-  
+
   analysis/expressions
   analysis/statements
   analysis/types
+
+  statics
 
 rules
   translationUnitOk : TranslationUnit
@@ -28,22 +30,70 @@ rules
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
     typeOfExp(s, e) == _. // TODO more constraints on this?
-  initClauseOk(s, ForInitDecl(declSpecs, initDeclrtrs)) :- {t T}
-    declSpecs == [TypeSpecifier2DeclarationSpecifier(t)],
-    typeOfType(s, [t]) == T, // specified type
-    initDeclrtrsOk(s, T, initDeclrtrs).
+  initClauseOk(s, ForInitDecl(declSpecs, initDeclrtrs)) :- {t T ids}
+    declSpecsToType(s, declSpecs) == T, // specified type
+    initDeclrtrsOk(s, T, initDeclrtrs) == ids,
+    declareVars(s, ids, T).
   
-  initDeclrtrOk : scope * TYPE * InitDeclarator
-  initDeclrtrsOk maps initDeclrtrOk(*, *, list(*))
-  initDeclrtrOk(s, T, InitDecl(decltr, init)).
-  initDeclrtrOk(s, T, Declarator2InitDeclarator(decl)) :-
-    declrtrOk(s, T, decl).
-  
-  declrtrOk : scope * TYPE * Declarator
+  initDeclrtrOk : scope * TYPE * InitDeclarator -> ID
+  initDeclrtrsOk maps initDeclrtrOk(*, *, list(*)) = list(*)
+  // TODO Instead of AssignExp, a list of AssignExps can also occur (array initializer)
+  // TODO When assigning, types do not have to match exactly. For example, assignments between int types are (mostly) allowed.
+  initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}
+    declrtrOk(s, decl) == id, // declared type
+    typeOfExp(s, e) == T', // expression type
+    T == T'.
+  initDeclrtrOk(s, _, Declarator2InitDeclarator(decl)) = id :-
+    declrtrOk(s, decl) == id.
+
+  declrtrOk : scope * Declarator -> ID
   // TODO Handle A LOT of other cases
   // Probably pass type from above and declare the variable in this rule
-  declrtrOk(s, T, Declarator(None, IdDecl(ID-LEX2ID(id)))).
+  declrtrOk(s, Declarator(None, IdDecl(id))) = id.
 
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
-//  declOk(s, Decl(declSpecs, initDecls)).
+  declOk(s, Decl(declSpecs, initDeclrtrs)) :- {ids T}
+    declSpecsToType(s, declSpecs) == T, // Assumption: there are *only* type specifiers in here
+    initDeclrtrsOk(s, T, initDeclrtrs) == ids,
+    declareVars(s, ids, T).
+
+  declSpecsToType : scope * list(DeclarationSpecifier) -> TYPE
+  declSpecsToType(s, specs) = typeOfType(s, declSpecsToTypeSpecs(specs)).
+
+  declSpecToTypeSpec : DeclarationSpecifier -> TypeSpecifier
+  declSpecsToTypeSpecs maps declSpecToTypeSpec(list(*)) = list(*)
+  declSpecToTypeSpec(d) = ts :-
+    d == TypeSpecifier2DeclarationSpecifier(ts).
+
+rules // declaring / resolving variables and functions
+  declareVar : scope * ID * TYPE
+  declareVars maps declareVar(*, list(*), *)
+  declareVar(s, id, T) :-
+    s -> Var{id} with type T,
+    type of Var{id} in s |-> [(_, (Var{id}, _))] | error $[Variable [id] already defined].
+
+  typeOfVar : scope * ID -> TYPE
+  typeOfVar(s, id) = T :- {id'}
+    @id.ref := id',
+    type of Var{id} in s |-> [(_, (Var{id'}, T))] | error $[Variable [id] not defined].
+
+  declareFun : scope * ID * TYPE
+  declareFun(s, id, T) :-
+    s -> Function{id} with type T,
+    type of Function{id} in s |-> [(_, (Function{id}, _))] | error $[Function [id] already defined].
+
+  typeOfFun : scope * ID -> TYPE
+  typeOfFun(s, id) = T :- {id'}
+    @id.ref := id',
+    type of Function{id} in s |-> [(_, (Function{id'}, T))] | error $[Function [id] not defined].
+
+  declareTypedef : scope * ID * TYPE
+  declareTypedef(s, id, T) :-
+    s -> Typedef{id} with type T,
+    type of Typedef{id} in s |-> [(_, (Typedef{id}, _))] | error $[Type [id] already defined].
+
+  typeOfTypedef : scope * ID -> TYPE
+  typeOfTypedef(s, id) = T :- {id'}
+    @id.ref := id',
+    type of Typedef{id} in s |-> [(_, (Typedef{id'}, T))] | error $[Type [id] not defined].
