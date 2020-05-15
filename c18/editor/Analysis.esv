@@ -18,4 +18,5 @@ references
 
 menus
   menu: "Analysis" (openeditor)
-    action: "Show injections" = explicate-injections-aterm (source)
+    action: "Show analysed"        = debug-show-analyzed        (source)
+    action: "Explicate injections" = explicate-injections-aterm (source)
