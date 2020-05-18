@@ -23,7 +23,7 @@ rules
   simplify-decl-spec: AlignasType(_) -> AlignasType()
   simplify-decl-spec: StructOrUnion(_, _, _) -> StructOrUnion()
   simplify-decl-spec: StructOrUnionDecl(_, _) -> StructOrUnionDecl() 
-  simplify-decl-spec: TypedefName(_) -> TypedefName()
+  simplify-decl-spec: TypedefName1(_) -> TypedefName()
 
 strategies
 
