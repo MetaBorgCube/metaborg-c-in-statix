@@ -1,4 +1,4 @@
-module decl-specs
+module desugar/decl-specs
 
 imports
   signatures/c-syntax-sig

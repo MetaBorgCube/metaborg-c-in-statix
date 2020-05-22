@@ -1,0 +1,50 @@
+module desugar/expressions
+
+imports
+  c-syntax
+
+sorts UnOp PreInc PreDec Sizeof SizeofT Alignof AlignofT Subscript PostInc PostDec
+context-free syntax
+  Exp.UnExp = <<UnOp> <Exp>>
+
+  UnOp.PreInc = <>
+  UnOp.PreDec = <>
+  UnOp.UnaryOp = <>
+  UnOp.Sizeof = <>
+  UnOp.SizeofT = <>
+  UnOp.Alignof = <>
+  UnOp.AlignofT = <>
+  UnOp.Subscript = <>
+  UnOp.PostInc = <>
+  UnOp.PostDec = <>
+  UnOp.UnOp = <>
+
+sorts BinOp Comma Assignop LOr LAnd Ior Eor And Add Sub Mul Div Mod Lshift Rshift Eq Neq Lt Gt Leq Geq
+context-free syntax
+  Exp.BinExp = <<BinOp> <Exp> <Exp>>
+
+  BinOp.Comma = <>
+
+  BinOp.AssignOp = <>
+
+  BinOp.LOr = <>
+  BinOp.LAnd = <>
+  BinOp.Ior = <>
+  BinOp.Eor = <>
+  BinOp.And = <>
+
+  BinOp.Add = <>
+  BinOp.Sub = <>
+  BinOp.Mul = <>
+  BinOp.Div = <>
+  BinOp.Mod = <>
+
+  BinOp.Lshift = <>
+  BinOp.Rshift = <>
+
+  BinOp.Eq = <>
+  BinOp.Neq = <>
+  BinOp.Lt = <>
+  BinOp.Gt = <>
+  BinOp.Leq = <>
+  BinOp.Geq = <>

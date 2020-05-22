@@ -2,7 +2,7 @@ module analysis/types
 
 imports
   signatures/c18-sig
-  desugar-signatures
+  signatures/desugar/expressions-sig
   
   analysis/declarations
 

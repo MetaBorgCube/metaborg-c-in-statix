@@ -3,7 +3,7 @@ module analysis/expressions
 imports
   analysis/types
 
-  desugar-signatures
+  signatures/desugar/expressions-sig
 
 rules
   typeOfExp : scope * Exp -> TYPE
