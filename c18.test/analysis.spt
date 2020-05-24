@@ -1,0 +1,22 @@
+module analysis
+
+language c18
+
+test main (matching return type) [[
+int main(int argc, char **argv) {
+  return 0;
+}
+]] analysis succeeds
+
+test main (non-matching return type) [[
+int main(int argc, char **argv) {
+  return;
+}
+]] analysis fails
+
+test main (invalid *void* type) [[
+void main(int argc, char **argv) {
+  return;
+}
+]] analysis fails
+
