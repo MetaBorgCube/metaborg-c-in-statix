@@ -57,8 +57,8 @@ rules
     resolveLabel(s, id).
   stmtOk(s, Return(Exp2Exp-OPT(e))) :- {T Tr}
     typeOfExp(s, e) == T,
-    type of Return{} in s |-> [(_, (Return{}, Tr))] | error "void function 'x' should not return a value",
-    Tr != VOID() | error "void function 'x' should not return a value".
+    type of Return{} in s |-> [(_, (Return{}, Tr))],
+    Tr != VOID() | error $[void function 'x' should not return a value (of type [Tr])].
   stmtOk(s, Return(NoExp())) :-
     type of Return{} in s |-> [(_, (Return{}, VOID()))]  | error "non-void function 'x' should return a value".
   stmtOk(s, CompoundStatement2Statement(compStmt)) :-
