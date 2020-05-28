@@ -1,3 +1,18 @@
-int main(int argc, char **argv) {
-  return 1 + 2;
+int main(int a) {
+  int i;
+  {
+    lbl: return i;
+  }
+  
+  goto non_existent;
+  goto lbl;
+  
+  {
+    {
+      goto lbl;
+    }
+    goto lbl; // expect error: not defined
+  }
+  
+  return a;
 }

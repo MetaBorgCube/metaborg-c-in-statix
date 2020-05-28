@@ -12,22 +12,19 @@ signature
     Var      : ID
     Function : ID
     Typedef  : ID
-
-    Return   :
-
     Label    : ID
+    Return   :
 
   relations
     type : occurrence -> TYPE
 
-  name-resolution labels P
+  name-resolution labels P F
     resolve Var filter P* min $ < P
     resolve Function min $ < P
     resolve Typedef filter P* min $ < P
+    resolve Label filter P* F* min $ < P, $ < F, F < P
+    resolve Return filter P* min $ < P
 
-    resolve Return
-
-    resolve Label // TODO should always be in top-level scope?
 
 rules
   translationUnitOk : TranslationUnit
@@ -124,3 +121,13 @@ rules // declaring / resolving variables and functions
   typeOfTypedef(s, id) = T :- {id'}
     @id.ref := id',
     type of Typedef{id} in s |-> [(_, (Typedef{id'}, T))] | error $[Type [id] not defined].
+
+  declareLabel : scope * ID
+  declareLabel(s, id) :-
+    s -> Label{id},
+    Label{id} in s |-> [(_, (Label{id}))] | error  $[redefinition of label [id]].
+
+  resolveLabel : scope * ID
+  resolveLabel(s, id) :- {id'}
+    @id.ref := id',
+    Label{id} in s |-> [(_, (Label{id'}))] | error  $[use of undeclared label [id]].

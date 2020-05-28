@@ -12,10 +12,12 @@ rules
   compStmtOk(s, Compound(blockItems)) :- {s_block}
     new s_block,
     s_block -P-> s,
+    s -F-> s_block,
     blockItemsOk(s_block, blockItems).
   
   stmtOk : scope * Statement
   stmtOk(s, Label(id, stmt)) :-
+    declareLabel(s, id),
     stmtOk(s, stmt).
   stmtOk(_, stmt) :-
     stmt != Case(_, _) | error "'case' statement not in switch statement" @stmt,
@@ -46,11 +48,13 @@ rules
   stmtOk(s, For(InitClause2InitClause-OPT(init), Exp2Exp-OPT(e1), Exp2Exp-OPT(e2), body)) :- {s_for T}
     new s_for,
     s_for -P-> s,
+    s -F-> s_for,
     initClauseOk(s_for, init),
     typeOfExp(s_for, e1) == T,
     intType(T), // TODO condition should be intType?
     typeOfExp(s_for, e2) == _. // TODO type does not matter?
-  stmtOk(s, Goto(id)). // TODO check if label with 'id' exists
+  stmtOk(s, Goto(id)) :-
+    resolveLabel(s, id).
   stmtOk(s, Return(Exp2Exp-OPT(e))) :- {T Tr}
     typeOfExp(s, e) == T,
     type of Return{} in s |-> [(_, (Return{}, Tr))] | error "void function 'x' should not return a value",
