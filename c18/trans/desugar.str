@@ -3,7 +3,6 @@ module desugar
 imports
   signatures/c-syntax-sig
   signatures/c-lexical-sig
-  desugar-signatures
   desugar/decl-specs
   
   libstratego-lib  
@@ -12,62 +11,16 @@ rules
 
   desugar-all = topdown(try(desugar)); sort-decl-spec-all
   
-  desugar: Comma(a, b) -> BinExp(Comma(), a, b)
-  
-  desugar: Assign(a, AssignMul(), b) -> BinExp(AssignMul(), a, b)
-  desugar: Assign(a, AssignDiv(), b) -> BinExp(AssignDiv(), a, b)
-  desugar: Assign(a, AssignMod(), b) -> BinExp(AssignMod(), a, b)
-  desugar: Assign(a, AssignAdd(), b) -> BinExp(AssignAdd(), a, b)
-  desugar: Assign(a, AssignMin(), b) -> BinExp(AssignMin(), a, b)
-  desugar: Assign(a, AssignLsh(), b) -> BinExp(AssignLsh(), a, b)
-  desugar: Assign(a, AssignRsh(), b) -> BinExp(AssignRsh(), a, b)
-  desugar: Assign(a, AssignAnd(), b) -> BinExp(AssignAnd(), a, b)
-  desugar: Assign(a, AssignPow(), b) -> BinExp(AssignPow(), a, b)
-  desugar: Assign(a, AssignOr(), b) -> BinExp(AssignOr(), a, b)
-  
-  desugar: LAnd(a, b) -> BinExp(LAnd(), a, b)
-  desugar: Ior(a, b) -> BinExp(Ior(), a, b)
-  desugar: Eor(a, b) -> BinExp(Eor(), a, b)
-  desugar: And(a, b) -> BinExp(And(), a, b)
-
-  desugar: Add(a, b) -> BinExp(Add(), a, b)
-  desugar: Sub(a, b) -> BinExp(Sub(), a, b)
-  desugar: Mul(a, b) -> BinExp(Mul(), a, b)
-  desugar: Div(a, b) -> BinExp(Div(), a, b)
-  desugar: Mod(a, b) -> BinExp(Mod(), a, b)
-
-  desugar: Lshift(a, b) -> BinExp(Lshift(), a, b)
-  desugar: Rshift(a, b) -> BinExp(Rshift(), a, b)
-
-  desugar: Eq(a, b) -> BinExp(Eq(), a, b)
-  desugar: Neq(a, b) -> BinExp(Neq(), a, b)
-  desugar: Lt(a, b) -> BinExp(Lt(), a, b)
-  desugar: Gt(a, b) -> BinExp(Gt(), a, b)
-  desugar: Leq(a, b) -> BinExp(Leq(), a, b)
-  desugar: Geq(a, b) -> BinExp(Geq(), a, b)
-  
-  desugar: Sizeof(e) -> UnExp(Sizeof(), e)
-  desugar: SizeofT(e) -> UnExp(SizeofT(), e)
-  desugar: Alignof(e) -> UnExp(Alignof(), e)
-  desugar: AlignofT(e) -> UnExp(AlignofT(), e)
-  
-  desugar: UnOp(Addr(), e) -> UnExp(Addr(), e)
-  desugar: UnOp(Deref(), e) -> UnExp(Deref(), e)
-  desugar: UnOp(Uplus(), e) -> UnExp(Uplus(), e)
-  desugar: UnOp(Umin(), e) -> UnExp(Umin(), e)
-  desugar: UnOp(Tilde(), e) -> UnExp(Tilde(), e)
-  desugar: UnOp(Not(), e) -> UnExp(Not(), e)
-  
-  desugar: Subscript(a, b) -> UnExp(Deref(), BinExp(Add(), a, b))
-  desugar: DerefProj(e, i) -> Proj(UnExp(Deref(), e), i)
+  desugar: Subscript(a, b) -> UnOp(Deref(), AddSub(a, Add(), b))
+  desugar: DerefProj(e, i) -> Proj(UnOp(Deref(), e), i)
   
   desugar: While(c, s) -> For(NoInitClause(), c, NoExp(), s)
   desugar: If(c, s) -> IfElse(c, s, Nop())
   
-  desugar: PreInc(e) -> BinExp(AssignAdd(), e, DecInt(1))
-  desugar: PreDec(e) -> BinExp(AssignMin(), e, DecInt(1))
+  desugar: PreInc(e) -> Assign(e, AssignAdd(), DecInt(1))
+  desugar: PreDec(e) -> Assign(e, AssignMin(), DecInt(1))
   
-  desugar: PostInc(e) -> BinExp(Sub(), PreInc(e), DecInt(1))
-  desugar: PostDec(e) -> BinExp(Add(), PreDec(e), DecInt(1))
+  desugar: PostInc(e) -> AddSub(PreInc(e), Sub(), DecInt(1))
+  desugar: PostDec(e) -> AddSub(PreDec(e), Add(), DecInt(1))
   
-  desugar: LOr(a, b) -> UnExp(Not(), LAnd(UnExp(Not(), a), UnExp(Not(), b)))
+  desugar: LOr(a, b) -> UnOp(Not(), LAnd(UnOp(Not(), a), UnOp(Not(), b)))

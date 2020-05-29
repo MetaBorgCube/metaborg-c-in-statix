@@ -3,8 +3,6 @@ module analysis/expressions
 imports
   analysis/types
 
-  desugar-signatures
-
 rules
   typeOfExp : scope * Exp -> TYPE
   typeOfExps maps typeOfExp(*, list(*)) = list(*)
@@ -16,14 +14,72 @@ rules
 //  typeOfExp(_, String(_)) = STRING().
   typeOfExp(_, LChar(_)) = CHAR().
 
-  typeOfExp(s, UnExp(op, e)) = T :- {Te}
+  typeOfExp(s, UnOp(op, e)) = T :- {Te}
     typeOfExp(s, e) == Te,
     typeOfUnExp(op, Te) == T.
   
-  typeOfExp(s, BinExp(op, e1, e2)) = T :- {T1 T2}
+//  typeOfExp(s, BinExp(op, e1, e2)) = T :- {T1 T2}
+//    typeOfExp(s, e1) == T1,
+//    typeOfExp(s, e2) == T2,
+//    typeOfBinExp(op, T1, T2) == T.
+
+  typeOfExp(s, Comma(e1, e2)) = typeOfExp(s, e2).
+  
+  typeOfExp(s, Assign(e1, op, e2)) = T :- {T2}
+    typeOfExp(s, e1) == T,
+    typeOfExp(s, e2) == T2,
+    lub(T2, T) == T.
+    
+  typeOfExp(s, LAnd(e1, e2)) = INT() :-
+    intType(typeOfExp(s, e1)),
+    intType(typeOfExp(s, e2)).
+    
+  typeOfExp(s, Ior(e1, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
-    typeOfBinExp(op, T1, T2) == T.
+    numberRules(T1, T2) == T.
+    
+  typeOfExp(s, Eor(e1, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    numberRules(T1, T2) == T.
+    
+  typeOfExp(s, And(e1, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    numberRules(T1, T2) == T.
+    
+  typeOfExp(s, EqNeq(e1, op, e2)) = INT() :-
+    intType(typeOfExp(s, e1)),
+    intType(typeOfExp(s, e2)).
+    
+  typeOfExp(s, Order(e1, op, e2)) = INT() :-
+    intType(typeOfExp(s, e1)),
+    intType(typeOfExp(s, e2)).
+    
+  typeOfExp(s, Shift(e1, op, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    numberRules(T1, INT()) == T,
+    intType(typeOfExp(s, e2)).
+    
+  typeOfExp(s, AddSub(e1, op, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    numberRules(T1, T2) == T.
+    
+  typeOfExp(s, MulDivMod(e1, op, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    numberRules(T1, T2) == T.
+    
+  typeOfExp(s, SizeofT(_)) = ULONGLONG().
+  typeOfExp(s, AlignofT(_)) = ULONGLONG().
+
+//  TODO: improve/desugar cast syntax?    
+//  typeOfExp(s, Cast(TypedefName2(ts, a), e)) = T :-
+//    typeOfType(s, ts) == T.
+
+  
 
 //  typeOfExp(s, Call(callee, args)) = Tr :- {Ta Ta'}
 //    typeOfExp(s, callee) == FUNC(Ta, Tr), // i.e. int -> int
@@ -39,75 +95,11 @@ rules
 //    // lookup var type in scope
 
 rules
-  typeOfBinExp : BinOp * TYPE * TYPE -> TYPE
-  typeOfBinExp(Comma(), T1, T2) = T :-
-    T1 == T2. // TODO check
-  typeOfBinExp(AssignOp(), T1, T2) = T :-
-    lub(T1, T2) == T1.
-  typeOfBinExp(LOr(), T1, T2) = INT() :-
-    intType(T1),
-    intType(T2).
-  typeOfBinExp(LAnd(), T1, T2) = INT() :- // &&
-    intType(T1),
-    intType(T2).
-  typeOfBinExp(Ior(), T1, T2) = T :-
-    lub(T1, T2) == T,
-    intType(T). // TODO No enums?
-  typeOfBinExp(Eor(), T1, T2) = T :-
-    lub(T1, T2) == T,
-    intType(T). // TODO No enums?
-  typeOfBinExp(And(), T1, T2) = T :- // &
-    lub(T1, T2) == T,
-    intType(T).
-
-  typeOfBinExp(Add(), T1, T2) = T :-
-    numberRules(T1, T2) == T.
-  typeOfBinExp(Sub(), T1, T2) = T :-
-    numberRules(T1, T2) == T.
-  typeOfBinExp(Mul(), T1, T2) = T :-
-    numberRules(T1, T2) == T.
-  typeOfBinExp(Div(), T1, T2) = numberRules(T1, T2).
-  typeOfBinExp(Mod(), T1, T2) = intRules(T1, T2).
-
-  typeOfBinExp(Lshift(), T1, T2) = intRules(T1, T2).
-  typeOfBinExp(Rshift(), T1, T2) = intRules(T1, T2).
-
-  typeOfBinExp(Eq(), T1, T2) = INT() :-
-    intType(T1),
-    intType(T2).
-  typeOfBinExp(Neq(), T1, T2) = INT() :-
-    intType(T1),
-    intType(T2).
-  typeOfBinExp(Lt(), T1, T2) = INT() :-
-    intType(T1),
-    intType(T2).
-  typeOfBinExp(Gt(), T1, T2) = INT() :-
-    intType(T1),
-    intType(T2).
-  typeOfBinExp(Leq(), T1, T2) = INT() :-
-    intType(T1),
-    intType(T2).
-  typeOfBinExp(Geq(), T1, T2) = INT() :-
-    intType(T1),
-    intType(T2).
-
-rules
-  typeOfUnExp : UnOp * TYPE -> TYPE
-  typeOfUnExp(PreInc(), T) = T :-
-    numberType(T).
-  typeOfUnExp(PreDec(), T) = T :-
-    numberType(T).
+  typeOfUnExp : UnaryOp * TYPE -> TYPE
 //  typeOfUnExp(UnaryOp(), T). TODO
   typeOfUnExp(Sizeof(), _) = ULONGLONG. // actually size_t
-  typeOfUnExp(SizeofT(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Alignof(), _) = ULONGLONG. // actually size_t
-  typeOfUnExp(AlignofT(), _) = ULONGLONG. // actually size_t
 //  typeOfUnExp(Subscript(), Te) = T :- // TODO if |-Te = int[], |-T=int
-  typeOfUnExp(PostInc(), T) = T :-
-    numberType(T).
-  typeOfUnExp(PostDec(), T) = T :-
-    numberType(T).
-//  typeOfUnExp(UnOp(), T). TODO
 
 rules
   intRules : TYPE * TYPE -> TYPE
