@@ -10,24 +10,19 @@ imports
 signature
   namespaces
     Var      : ID
-    Function : ID
     Typedef  : ID
-
-    Return   :
-
     Label    : ID
+    Return   :
 
   relations
     type : occurrence -> TYPE
 
-  name-resolution labels P
+  name-resolution labels P F
     resolve Var filter P* min $ < P
-    resolve Function min $ < P
     resolve Typedef filter P* min $ < P
+    resolve Label filter P* F* min $ < P, $ < F, F < P
+    resolve Return filter P* min $ < P
 
-    resolve Return
-
-    resolve Label // TODO should always be in top-level scope?
 
 rules
   translationUnitOk : TranslationUnit
@@ -44,15 +39,15 @@ rules
 
   // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
   funDefOk : scope * FunctionDefinition
-  funDefOk(s, FunDef(declSpecs, declarator, decls, compStmt)) :- {s_fun id T}
+  funDefOk(s, FunDef(declSpecs, Declarator(NoPointer(), FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun T}
     declSpecsToType(s, declSpecs) == T,
-    declrtrOk(s, declarator) == id,
     new s_fun,
     s_fun -P-> s,
     s_fun -> Return{} with type T,
+    paramsOk(s, s_fun, params),
     declsOk(s_fun, decls),
     compStmtOk(s_fun, compStmt),
-    declareFun(s, id, T).
+    declareVar(s, id, T).
     
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
@@ -77,6 +72,19 @@ rules
   // TODO Handle A LOT of other cases
   // Probably pass type from above and declare the variable in this rule
   declrtrOk(s, Declarator(NoPointer(), IdDecl(id))) = id.
+  declrtrOk(s, Declarator(NoPointer(), DeclBracket(declrtr))) = declrtrOk(s, declrtr).
+//  declrtrOk(s, Declarator(NoPointer(), ArrayDecl())). // TODO
+
+  abstDeclrtrOk : scope * AbstractDeclarator
+
+  paramOk : scope * scope * ParameterDeclaration
+  paramsOk maps paramOk(*, *, list(*))
+  paramOk(s, s_fun, ParamDecl1(declSpecs, declrtr)) :- {id T}
+    declSpecsToType(s, declSpecs) == T, // specified type
+    declrtrOk(s, declrtr) == id, // declared type
+    declareVar(s_fun, id, T).
+  paramOk(s, s_fun, ParamDecl2(declSpecs, NoAbstractDeclarator())).
+  paramOk(s, s_fun, ParamDecl2(declSpecs, AbstractDeclarator2AbstractDeclarator-OPT(abstDeclrtr))). // TODO finish
 
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
@@ -105,16 +113,6 @@ rules // declaring / resolving variables and functions
     @id.ref := id',
     type of Var{id} in s |-> [(_, (Var{id'}, T))] | error $[Variable [id] not defined].
 
-  declareFun : scope * ID * TYPE
-  declareFun(s, id, T) :-
-    s -> Function{id} with type T,
-    type of Function{id} in s |-> [(_, (Function{id}, _))] | error $[Function [id] already defined].
-
-  typeOfFun : scope * ID -> TYPE
-  typeOfFun(s, id) = T :- {id'}
-    @id.ref := id',
-    type of Function{id} in s |-> [(_, (Function{id'}, T))] | error $[Function [id] not defined].
-
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-
     s -> Typedef{id} with type T,
@@ -124,3 +122,13 @@ rules // declaring / resolving variables and functions
   typeOfTypedef(s, id) = T :- {id'}
     @id.ref := id',
     type of Typedef{id} in s |-> [(_, (Typedef{id'}, T))] | error $[Type [id] not defined].
+
+  declareLabel : scope * ID
+  declareLabel(s, id) :-
+    s -> Label{id},
+    Label{id} in s |-> [(_, (Label{id}))] | error  $[redefinition of label [id]].
+
+  resolveLabel : scope * ID
+  resolveLabel(s, id) :- {id'}
+    @id.ref := id',
+    Label{id} in s |-> [(_, (Label{id'}))] | error  $[use of undeclared label [id]].

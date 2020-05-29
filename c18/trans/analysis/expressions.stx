@@ -1,6 +1,7 @@
 module analysis/expressions
 
 imports
+  analysis/declarations
   analysis/types
 
 rules
@@ -91,8 +92,7 @@ rules
 //  typeOfExp(s, DerefProj(e, ID-LEX2ID(id))) = T :-
 //    // lookup scope (type) of e
 //    // find 'id' in scope and unify with T
-//  typeOfExp(s, Var(ID-LEX2ID(id))) = INT().
-//    // lookup var type in scope
+  typeOfExp(s, Var(id)) = typeOfVar(s, id).
 
 rules
   typeOfUnExp : UnaryOp * TYPE -> TYPE
