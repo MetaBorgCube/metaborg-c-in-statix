@@ -32,7 +32,7 @@ signature
   COMPLEX 				: TYPE -> TYPE
   IMAGINARY				: TYPE -> TYPE
   // TODO atomic
-  STRUCT				: scope * STRING -> TYPE
+  STRUCT				: scope * STR -> TYPE
   UNION					: list(TYPE) -> TYPE
   ENUM					: TYPE
   // TODO typedef names
