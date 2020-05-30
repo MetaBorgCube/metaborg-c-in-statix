@@ -69,9 +69,9 @@ lexical syntax
   CharChar = "\\ooo"
   CharChar = "\\x" [0-9a-fA-F] [0-9a-fA-F]
 
-sorts STR // StringChar BackSlashChar
+lexical sorts STRING // StringChar BackSlashChar
 lexical syntax // strings
-  STR     = [L]? "\"" StringChar* "\"" 
+  STRING     = [L]? "\"" StringChar* "\"" 
   StringChar = ~[\"\n] 
   StringChar = "\\\"" 
   StringChar = BackSlashChar 

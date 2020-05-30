@@ -80,7 +80,7 @@ sorts StaticAssert StructOrUnionSpecifier StructOrUnion InitDeclarator StructDec
 
 context-free syntax
 
-  StaticAssert.StaticAssert = <_Static_assert(<ConstExp>, <STR>)>
+  StaticAssert.StaticAssert = <_Static_assert(<ConstExp>, <STRING>)>
   
   StructOrUnionSpecifier.StructOrUnion = <
     <StructOrUnion> <TypeID-OPT> {
@@ -319,7 +319,7 @@ context-free syntax
   Exp.PostDec   = <<Exp>--> 
   Exp.Var       = ID 
   Exp           = Constant 
-  Exp.String    = STR 
+  Exp.String    = STRING 
   Exp.LChar     = CHAR
   Exp           = <(<Exp>)> {bracket}
 
