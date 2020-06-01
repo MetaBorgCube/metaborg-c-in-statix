@@ -8,6 +8,8 @@ imports
   injections/-
 
   pp
+  
+  desugar
 
 rules // Analysis
 
@@ -19,7 +21,7 @@ rules // Analysis
   // multi-file analysis
 //  editor-analyze = stx-editor-analyze(id|"statics", "projectOk", "fileOk")
 
-  pre-analyze = explicate-injections-c18
+  pre-analyze = desugar-all; explicate-injections-c18
   post-analyze = strip-annos; implicate-injections-c18
 
 rules // Editor Services
@@ -44,4 +46,10 @@ rules // Debugging
     (node, _, _, path, project-path) -> (filename, result)
     with
       filename := <guarantee-extension(|"inj.aterm")> path
-    ; result   := <explicate-injections-c18>node
+    ; result   := <explicate-injections-c18> node
+
+  explicate-injections-desugared-aterm:
+    (node, _, _, path, project-path) -> (filename, result)
+    with
+      filename := <guarantee-extension(|"inj.desugared.aterm")> path
+    ; result   := <explicate-injections-c18> <desugar-all> node
