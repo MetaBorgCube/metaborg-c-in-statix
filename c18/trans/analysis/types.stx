@@ -38,6 +38,8 @@ signature
   // TODO typedef names
 
   // TODO type qualifiers
+  
+  POINTER : TYPE -> TYPE
 
 rules // typing  rules
 	// TODO Find a way to accept specifiers in arbitrary order
@@ -122,6 +124,8 @@ rules // typing  rules
   // TODO struct
   // TODO union
   // TODO enum
+  
+  typeOfType(s, [PointerT(_, st)]) = POINTER(declSpecsToType(s, st)).
 
   // typedef names
   typeOfType(s, [TypedefName1(x)]) = typeOfTypedef(s, x). // TODO perform lookup for 'x'
