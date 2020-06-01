@@ -58,6 +58,10 @@ context-free syntax
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
   TypeSpecifier.TypedefName1 = <<TypeID>>
+  TypeSpecifier.PointerT = <
+    ____dummy_typed_pointer_constructor_for_statix_signature_generator____
+    <DeclarationSpecifier*> <DeclarationSpecifier+>
+  >
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Restrict  = <restrict>

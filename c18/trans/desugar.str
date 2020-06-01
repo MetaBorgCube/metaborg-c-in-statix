@@ -5,11 +5,51 @@ imports
   signatures/c-lexical-sig
   desugar/decl-specs
   
-  libstratego-lib  
+  libstratego-lib
+  
+signature
+  /**
+   * The occurrence of a pointer, qualified (e.g. const volatile).
+   */
+  sorts PointerQ
+  constructors PointerQ : List(DeclarationSpecifier) -> DeclarationSpecifier
+
+  /**
+   * A pointer as part of a type, qualified like PointerQ and containing the type pointed to.
+   */
+//  sorts PointerT
+//  constructors PointerT : List(DeclarationSpecifier) * List(DeclarationSpecifier) -> DeclarationSpecifier
+  
+rules
+
+  /**
+   * Unfolds Pointer instances to a sequence of qualified pointer occurrences.
+   */
+  unfold-pointer-n: NoPointer() -> []
+  unfold-pointer-n: Pointer(q) -> [PointerQ(q)]
+  unfold-pointer-n: PointerN(q, p) -> [PointerQ(q) | <unfold-pointer-n> p]
+  
+strategies
+  
+  pointers-to-type: Decl(t, Declarator(ps, i)) -> Decl(<foldl(fold-pointer-q)> (ps, t), [Declarator(NoPointer(), i)])
+  pointers-to-type: Decl(t, InitDecl(Declarator(ps, i), ini)) -> Decl(<foldl(fold-pointer-q)> (ps, t), [InitDecl(Declarator(NoPointer(), i), ini)])
+  
+  decl-to-fundef(|ds, ss) = ?Decl(t, [dt]); !FunDef(t, dt, ds, ss)
+  decl-to-paramdecl: Decl(t, [dt]) -> ParamDecl1(t, dt)
+  decl-to-paramdecl2: Decl(t, _) -> ParamDecl2(t, NoAbstractDeclarator())
+  
+strategies
+
+  fold-pointer-q: (PointerQ(qs), ps) -> [PointerT(qs, ps)]
+  
+  gen-unidecl(|t) = ?a; !Decl(t, a)
     
 rules
 
-  desugar-all = topdown(try(desugar)); sort-decl-spec-all
+  desugar-all = topdown(try(desugar)); 
+    sort-decl-spec-all; 
+    desugar-pointers-all; 
+    collapse-decls-all
   
   desugar: Subscript(a, b) -> UnOp(Deref(), AddSub(a, Add(), b))
   desugar: DerefProj(e, i) -> Proj(UnOp(Deref(), e), i)
@@ -24,3 +64,36 @@ rules
   desugar: PostDec(e) -> AddSub(PreDec(e), Add(), DecInt(1))
   
   desugar: LOr(a, b) -> UnOp(Not(), LAnd(UnOp(Not(), a), UnOp(Not(), b)))
+    
+rules
+
+  desugar: NoPointer() -> []
+  desugar: Pointer(q) -> [PointerQ(q)]
+  desugar: n@PointerN(q, p) -> <unfold-pointer-n> n  
+  
+rules
+
+  desugar-pointers-all = topdown(try(desugar-pointers))
+
+  // Regular variable declarations (int *a, b;)
+  desugar-pointers: Decl(t, dt) -> <map(pointers-to-type)> <map(gen-unidecl(|t))> dt
+  // Named parameters (int *a)
+  desugar-pointers: ParamDecl1(t, dt) -> 
+      <decl-to-paramdecl> <pointers-to-type> <gen-unidecl(|t)> dt
+  // Anonymous parameters, nothing special (int) 
+  desugar-pointers: ParamDecl2(t, NoAbstractDeclarator()) -> 
+      <decl-to-paramdecl2> <pointers-to-type> <gen-unidecl(|t)> Declarator(NoPointer(), IdDecl("dummy"))
+  // Anonymous parameters, with pointers (int *)
+  desugar-pointers: ParamDecl2(t, [p@PointerQ(_)]) -> 
+      <decl-to-paramdecl2> <pointers-to-type> <gen-unidecl(|t)> Declarator([p], IdDecl("dummy"))
+  // Function definition (return type only, e.g. int *__errno_location(void))
+  desugar-pointers: FunDef(t, dt, ds, ss) -> 
+      <decl-to-fundef(|ds, ss)> <pointers-to-type> <gen-unidecl(|t)> dt
+
+rules
+
+  collapse-decls-all = topdown(try(collapse-decls))
+
+  collapse-decls: TranslationUnit(ds) -> TranslationUnit(<flatten-list> ds)
+  collapse-decls: FunDef(ds, d, vds, ss) -> FunDef(ds, d, <flatten-list> vds, ss)
+  collapse-decls: Compound(ds) -> Compound(<flatten-list> ds)
