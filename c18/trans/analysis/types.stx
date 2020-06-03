@@ -124,8 +124,6 @@ rules // typing  rules
   // TODO struct
   // TODO union
   // TODO enum
-  
-  typeOfType(s, [PointerT(_, st)]) = POINTER(declSpecsToType(s, st)).
 
   // typedef names
   typeOfType(s, [TypedefName1(x)]) = typeOfTypedef(s, x). // TODO perform lookup for 'x'
@@ -216,7 +214,11 @@ rules signed : TYPE
 	
 rules lub : TYPE * TYPE -> TYPE
 
-  lub(Ta, Tb) = T :- {Ra Rb}
+  lub(Ta, Tb) = ilub(Ta, Tb).
+
+rules ilub : TYPE * TYPE -> TYPE
+
+  ilub(Ta, Tb) = T :- {Ra Rb}
     intConvRank(Ta) == Ra,
     intConvRank(Tb) == Rb,
     Ra #=< Rb,

@@ -52,13 +52,12 @@ rules
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
     typeOfExp(s, e) == _. // TODO more constraints on this?
-  initClauseOk(s, ForInitDecl(declSpecs, initDeclrtrs)) :- {t T ids}
-    declSpecsToType(s, declSpecs) == T, // specified type
-    initDeclrtrsOk(s, T, initDeclrtrs) == ids,
-    declareVars(s, ids, T).
+//  initClauseOk(s, ForInitDecl(declSpecs, initDeclrtrs)) :- {t T ids}
+//    declSpecsToType(s, declSpecs) == T, // specified type
+//    initDeclrtrsOk(s, T, initDeclrtrs) == ids,
+//    declareVars(s, ids, T).
   
   initDeclrtrOk : scope * TYPE * InitDeclarator -> ID
-  initDeclrtrsOk maps initDeclrtrOk(*, *, list(*)) = list(*)
   // TODO Instead of AssignExp, a list of AssignExps can also occur (array initializer)
   // TODO When assigning, types do not have to match exactly. For example, assignments between int types are (mostly) allowed.
   initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}
@@ -71,8 +70,8 @@ rules
   declrtrOk : scope * Declarator -> ID
   // TODO Handle A LOT of other cases
   // Probably pass type from above and declare the variable in this rule
-  declrtrOk(s, Declarator(NoPointer(), IdDecl(id))) = id.
-  declrtrOk(s, Declarator(NoPointer(), DeclBracket(declrtr))) = declrtrOk(s, declrtr).
+  declrtrOk(s, Declarator(_, IdDecl(id))) = id.
+  declrtrOk(s, Declarator(_, DeclBracket(declrtr))) = declrtrOk(s, declrtr).
 //  declrtrOk(s, Declarator(NoPointer(), ArrayDecl())). // TODO
 
   abstDeclrtrOk : scope * AbstractDeclarator
@@ -89,10 +88,22 @@ rules
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
   declsOk maps declOk(*, list(*))
-  declOk(s, Decl(declSpecs, initDeclrtrs)) :- {ids T}
-    declSpecsToType(s, declSpecs) == T, // Assumption: there are *only* type specifiers in here
-    initDeclrtrsOk(s, T, initDeclrtrs) == ids,
-    declareVars(s, ids, T).
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, _))])) :- {id Tu T}
+    declSpecsToType(s, declSpecs) == Tu, // Assumption: there are *only* type specifiers in here
+    typeOfPointer(p, Tu) == T,
+    initDeclrtrOk(s, T, i) == id,
+    declareVar(s, id, T).
+  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, _), AssignExp2Initializer(Exp2AssignExp(ie)))])) :- {id Tu T Ti}
+    declSpecsToType(s, declSpecs) == Tu, // Assumption: there are *only* type specifiers in here
+    typeOfPointer(p, Tu) == T,
+    initDeclrtrOk(s, T, i) == id,
+    typeOfExp(s, ie) == Ti,
+    lub(Ti, T) == T,
+    declareVar(s, id, T).
+    
+  typeOfPointer : Pointer-OPT * TYPE -> TYPE
+  typeOfPointer(NoPointer(), T) = T.
+  typeOfPointer(Pointer2Pointer-OPT(Pointer(po, q)), T) = POINTER(typeOfPointer(po, T)).
 
   declSpecsToType : scope * list(DeclarationSpecifier) -> TYPE
   declSpecsToType(s, specs) = typeOfType(s, declSpecsToTypeSpecs(specs)).

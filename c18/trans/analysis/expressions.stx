@@ -99,7 +99,8 @@ rules
 //  typeOfUnExp(UnaryOp(), T). TODO
   typeOfUnExp(Sizeof(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Alignof(), _) = ULONGLONG. // actually size_t
-//  typeOfUnExp(Subscript(), Te) = T :- // TODO if |-Te = int[], |-T=int
+  typeOfUnExp(Deref(), POINTER(T)) = T. // TODO if |-Te = int[], |-T=int
+    
 
 rules
   intRules : TYPE * TYPE -> TYPE
