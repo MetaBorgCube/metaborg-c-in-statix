@@ -97,9 +97,10 @@ rules
   declSpecsToType : scope * list(DeclarationSpecifier) -> TYPE
   declSpecsToType(s, specs) = typeOfType(s, declSpecsToTypeSpecs(specs)).
 
-  declSpecToTypeSpec : DeclarationSpecifier -> TypeSpecifier
-  declSpecsToTypeSpecs maps declSpecToTypeSpec(list(*)) = list(*)
-  declSpecToTypeSpec(TypeSpecifier2DeclarationSpecifier(ts)) = ts.
+  declSpecsToTypeSpecs : list(DeclarationSpecifier) -> list(TypeSpecifier)
+  declSpecsToTypeSpecs([]) = [].
+  declSpecsToTypeSpecs([TypeSpecifier2DeclarationSpecifier(ts) | dss]) = [ts | declSpecsToTypeSpecs(dss)].
+  declSpecsToTypeSpecs([_ | dss]) = declSpecsToTypeSpecs(dss).
 
 rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
