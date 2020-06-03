@@ -3,6 +3,7 @@ module analysis/types
 imports
   signatures/c18-sig
   
+  analysis/util-bool
   analysis/declarations
 
 //signature // to also consider qualifiers 
@@ -214,12 +215,23 @@ rules signed : TYPE
 	
 rules lub : TYPE * TYPE -> TYPE
 
-  lub(Ta, Tb) = ilub(Ta, Tb).
+  lub(T, T) = T.
+  lub(Ta, Tb) = T :- { bia bib } 
+    bia == ilub(Ta, Tb),
+    bib == ilub(Tb, Ta),
+    project(bia, Ta) == T,
+    project(bib, Tb) == T.
+  
 
-rules ilub : TYPE * TYPE -> TYPE
+rules project : Bool * TYPE -> TYPE
 
-  ilub(Ta, Tb) = T :- {Ra Rb}
+  project(True(), T) = T.  
+
+rules ilub : TYPE * TYPE -> Bool
+
+  ilub(POINTER(Ta), POINTER(VOID())) = True().
+
+  ilub(Ta, Tb) = True() :- {Ra Rb}
     intConvRank(Ta) == Ra,
     intConvRank(Tb) == Rb,
-    Ra #=< Rb,
-    T == Tb.
+    Ra #=< Rb.

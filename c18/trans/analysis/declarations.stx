@@ -78,8 +78,9 @@ rules
 
   paramOk : scope * scope * ParameterDeclaration
   paramsOk maps paramOk(*, *, list(*))
-  paramOk(s, s_fun, ParamDecl1(declSpecs, declrtr)) :- {id T}
-    declSpecsToType(s, declSpecs) == T, // specified type
+  paramOk(s, s_fun, ParamDecl1(declSpecs, declrtr@Declarator(p, _))) :- {id T Tu}
+    declSpecsToType(s, declSpecs) == Tu, // specified type
+    typeOfPointer(p, Tu) == T,
     declrtrOk(s, declrtr) == id, // declared type
     declareVar(s_fun, id, T).
   paramOk(s, s_fun, ParamDecl2(declSpecs, NoAbstractDeclarator())).
@@ -122,8 +123,8 @@ rules // declaring / resolving variables and functions
 
   typeOfVar : scope * ID -> TYPE
   typeOfVar(s, id) = T :- {id'}
-    @id.ref := id',
-    type of Var{id} in s |-> [(_, (Var{id'}, T))] | error $[Variable [id] not defined].
+//    @id.ref := id', // was causing errors, explicated terms don't support annotations?
+    type of Var{id} in s |-> [(_, (Var{id}, T))] | error $[Variable [id] not defined].
 
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-

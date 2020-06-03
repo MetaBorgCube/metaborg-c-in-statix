@@ -12,7 +12,7 @@ rules
   typeOfExp(_, Constant2Exp(IntegerConstant2Constant(_))) = INT().
   typeOfExp(_, Constant2Exp(CharacterConstant2Constant(_))) = INT().
   typeOfExp(_, Constant2Exp(FloatingConstant2Constant(_))) = FLOAT().
-//  typeOfExp(_, String(_)) = STRING().
+  typeOfExp(_, String(_)) = POINTER(CHAR()).
   typeOfExp(_, LChar(_)) = CHAR().
 
   typeOfExp(s, UnOp(op, e)) = T :- {Te}
@@ -66,7 +66,7 @@ rules
   typeOfExp(s, AddSub(e1, op, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
-    numberRules(T1, T2) == T.
+    typeOfAddSub(T1, T2) == T.
     
   typeOfExp(s, MulDivMod(e1, op, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
@@ -93,6 +93,13 @@ rules
 //    // lookup scope (type) of e
 //    // find 'id' in scope and unify with T
   typeOfExp(s, Var(id)) = typeOfVar(s, id).
+  
+  
+rules typeOfAddSub : TYPE * TYPE -> TYPE
+  
+  typeOfAddSub(POINTER(T1), T2) = POINTER(T1) :- intType(T2).
+  typeOfAddSub(T1, POINTER(T2)) = POINTER(T2) :- intType(T1).
+  typeOfAddSub(T1, T2) = numberRules(T1, T2).
 
 rules
   typeOfUnExp : UnaryOp * TYPE -> TYPE
