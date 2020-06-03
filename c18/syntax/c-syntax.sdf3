@@ -58,10 +58,6 @@ context-free syntax
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
   TypeSpecifier.TypedefName1 = <<TypeID>>
-  TypeSpecifier.PointerT = <
-    ____dummy_typed_pointer_constructor_for_statix_signature_generator____
-    <DeclarationSpecifier*> <DeclarationSpecifier+>
-  >
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Restrict  = <restrict>
@@ -178,8 +174,7 @@ context-free syntax
 
   TypeName = TypeID 
   
-  Pointer.Pointer = <* <TypeQualifier*>> 
-  Pointer.PointerN = <* <TypeQualifier*> <Pointer>>
+  Pointer.Pointer = <<Pointer-OPT> *<TypeQualifier*>>
 
 sorts AbstractDeclarator-OPT DirectAbstractDeclarator-OPT InitClause-OPT
 context-free syntax
