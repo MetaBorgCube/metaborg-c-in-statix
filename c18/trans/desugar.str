@@ -44,6 +44,7 @@ rules
   desugar-pointers-all = bottomup(try(desugar-pointers))
 
   // Regular variable declarations (int *a, b;)
+  desugar-pointers: Decl(t, []) -> Decl(t, []) 
   desugar-pointers: Decl(t, dt) -> <map(gen-unidecl(|t))> dt
   // Named parameters (int *a)
   desugar-pointers: ParamDecl1(t, dt) -> 
