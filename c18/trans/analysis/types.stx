@@ -216,22 +216,26 @@ rules signed : TYPE
 rules lub : TYPE * TYPE -> TYPE
 
   lub(T, T) = T.
-  lub(Ta, Tb) = T :- { bia bib } 
-    bia == ilub(Ta, Tb),
-    bib == ilub(Tb, Ta),
-    project(bia, Ta) == T,
-    project(bib, Tb) == T.
+  lub(Ta, Tb) = T :- 
+    ilub(Ta, Tb) == T.
   
 
-rules project : Bool * TYPE -> TYPE
+rules project : Bool * TYPE * TYPE -> TYPE
 
-  project(True(), T) = T.  
+  project(True(), T, _) = T.
+  project(False(), _, T) = T.  
 
-rules ilub : TYPE * TYPE -> Bool
+rules ilub : TYPE * TYPE -> TYPE
 
-  ilub(POINTER(Ta), POINTER(VOID())) = True().
+  ilub(POINTER(Ta), POINTER(VOID())) = POINTER(Ta).
 
-  ilub(Ta, Tb) = True() :- {Ra Rb}
+  ilub(Ta, Tb) = T :- {Ra Rb Rm}
     intConvRank(Ta) == Ra,
     intConvRank(Tb) == Rb,
-    Ra #=< Rb.
+    #(max(Ra, Rb)) == Rm,
+    projIntEq(Rm, Ra, Ta, Tb) == T.
+    
+rules projIntEq : int * int * TYPE * TYPE -> TYPE
+
+  projIntEq(i, i, T, _) = T.
+  projIntEq(_, _, _, T) = T.

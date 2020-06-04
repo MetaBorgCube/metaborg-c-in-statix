@@ -64,7 +64,7 @@ rules
   initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}
     declrtrOk(s, decl) == id, // declared type
     typeOfExp(s, e) == T', // expression type
-    T == T'.
+    lub(T, T') == T.
   initDeclrtrOk(s, _, Declarator2InitDeclarator(decl)) = id :-
     declrtrOk(s, decl) == id.
 
@@ -101,12 +101,10 @@ rules
     typeOfPointer(p, Tu) == T,
     initDeclrtrOk(s, T, i) == id,
     declareVar(s, id, T).
-  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, _), AssignExp2Initializer(Exp2AssignExp(ie)))])) :- {id Tu T Ti}
+  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, _), _)])) :- {id Tu T Ti}
     declSpecsToType(s, declSpecs) == Tu, // Assumption: there are *only* type specifiers in here
     typeOfPointer(p, Tu) == T,
     initDeclrtrOk(s, T, i) == id,
-    typeOfExp(s, ie) == Ti,
-    lub(Ti, T) == T,
     declareVar(s, id, T).
     
   typeOfPointer : Pointer-OPT * TYPE -> TYPE
