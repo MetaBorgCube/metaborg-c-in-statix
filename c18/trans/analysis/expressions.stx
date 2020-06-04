@@ -104,7 +104,7 @@ rules
 //  typeOfUnExp(UnaryOp(), T). TODO
   typeOfUnExp(Sizeof(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Alignof(), _) = ULONGLONG. // actually size_t
-  typeOfUnExp(Deref(), POINTER(T)) = T. // TODO if |-Te = int[], |-T=int
+  typeOfUnExp(Deref(), POINTER(T)) = T.
     
 
 rules
