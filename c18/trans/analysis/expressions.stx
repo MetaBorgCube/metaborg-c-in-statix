@@ -80,12 +80,10 @@ rules
 //  typeOfExp(s, Cast(TypedefName2(ts, a), e)) = T :-
 //    typeOfType(s, ts) == T.
 
-  
-
-//  typeOfExp(s, Call(callee, args)) = Tr :- {Ta Ta'}
-//    typeOfExp(s, callee) == FUNC(Ta, Tr), // i.e. int -> int
-//    typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
-//    Ta' == Ta.
+  typeOfExp(s, Call(callee, args)) = Tr :- {Ta Ta'}
+    typeOfExp(s, callee) == FUN(Ta, Tr), // i.e. int -> int
+    typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
+    Ta' == Ta.
 //  typeOfExp(s, Proj(e, ID-LEX2ID(id))) = T :-
 //    // lookup scope (type) of e
 //    // find 'id' in scope and unify with T
