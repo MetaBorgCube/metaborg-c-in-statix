@@ -39,8 +39,9 @@ rules
 
   // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
   funDefOk : scope * FunctionDefinition
-  funDefOk(s, FunDef(declSpecs, Declarator(NoPointer(), FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun paramTs retT}
-    declSpecsToType(s, declSpecs) == retT,
+  funDefOk(s, FunDef(declSpecs, Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun paramTs retT retTu}
+    declSpecsToType(s, declSpecs) == retTu,
+    typeOfPointer(p, retTu) == retT,
     new s_fun,
     s_fun -P-> s,
     s_fun -> Return{} with type retT,
