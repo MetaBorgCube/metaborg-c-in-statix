@@ -26,21 +26,20 @@ signature
   UINT 					: TYPE
   LONG 					: TYPE
   ULONG 				: TYPE
-  LONGLONG 				: TYPE
-  ULONGLONG 			: TYPE
+  LONGLONG 			: TYPE
+  ULONGLONG 		: TYPE
   FLOAT 				: TYPE
   DOUBLE 				: TYPE
-  LONGDOUBLE 			: TYPE
+  LONGDOUBLE 		: TYPE
   BOOL 					: TYPE
-  COMPLEX 				: TYPE -> TYPE
-  IMAGINARY				: TYPE -> TYPE
-  // TODO atomic
+  COMPLEX 			: TYPE -> TYPE
+  IMAGINARY			: TYPE -> TYPE
   STRUCT				: scope * STRING -> TYPE
   UNION					: list(TYPE) -> TYPE
   ENUM					: TYPE
-  // TODO typedef names
 
   // TODO type qualifiers
+  // ATOMIC
   
   POINTER : TYPE -> TYPE
 
@@ -123,7 +122,6 @@ rules // typing  rules
   typeOfType(_, [t1, t2, Imaginary()]) = IMAGINARY(SUB) :-
 	complexSubtype([t1, t2]) == SUB.
 
-  // TODO _Atomic
   // TODO struct
   // TODO union
   // TODO enum
