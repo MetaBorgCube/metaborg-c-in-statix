@@ -14,6 +14,8 @@ imports
 
 signature
   sorts TYPE constructors
+  FUN           : list(TYPE) * TYPE -> TYPE
+
   VOID 					: TYPE
   CHAR 					: TYPE
   SCHAR 				: TYPE

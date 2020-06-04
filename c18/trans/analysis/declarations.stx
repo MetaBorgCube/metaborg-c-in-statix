@@ -39,15 +39,15 @@ rules
 
   // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
   funDefOk : scope * FunctionDefinition
-  funDefOk(s, FunDef(declSpecs, Declarator(NoPointer(), FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun T}
-    declSpecsToType(s, declSpecs) == T,
+  funDefOk(s, FunDef(declSpecs, Declarator(NoPointer(), FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun paramTs retT}
+    declSpecsToType(s, declSpecs) == retT,
     new s_fun,
     s_fun -P-> s,
-    s_fun -> Return{} with type T,
-    paramsOk(s, s_fun, params),
+    s_fun -> Return{} with type retT,
+    paramsOk(s, s_fun, params) == paramTs,
     declsOk(s_fun, decls),
     compStmtOk(s_fun, compStmt),
-    declareVar(s, id, T).
+    declareFun(s, id, paramTs, retT).
     
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
@@ -76,15 +76,15 @@ rules
 
   abstDeclrtrOk : scope * AbstractDeclarator
 
-  paramOk : scope * scope * ParameterDeclaration
-  paramsOk maps paramOk(*, *, list(*))
-  paramOk(s, s_fun, ParamDecl1(declSpecs, declrtr@Declarator(p, _))) :- {id T Tu}
+  paramOk : scope * scope * ParameterDeclaration -> TYPE
+  paramsOk maps paramOk(*, *, list(*)) = list(*)
+  paramOk(s, s_fun, ParamDecl1(declSpecs, declrtr@Declarator(p, _))) = T :- {id Tu}
     declSpecsToType(s, declSpecs) == Tu, // specified type
     typeOfPointer(p, Tu) == T,
     declrtrOk(s, declrtr) == id, // declared type
     declareVar(s_fun, id, T).
-  paramOk(s, s_fun, ParamDecl2(declSpecs, NoAbstractDeclarator())).
-  paramOk(s, s_fun, ParamDecl2(declSpecs, AbstractDeclarator2AbstractDeclarator-OPT(abstDeclrtr))). // TODO finish
+//  paramOk(s, s_fun, ParamDecl2(declSpecs, NoAbstractDeclarator())).
+//  paramOk(s, s_fun, ParamDecl2(declSpecs, AbstractDeclarator2AbstractDeclarator-OPT(abstDeclrtr))). // TODO finish
 
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
@@ -125,6 +125,14 @@ rules // declaring / resolving variables and functions
   typeOfVar(s, id) = T :- {id'}
 //    @id.ref := id', // was causing errors, explicated terms don't support annotations?
     type of Var{id} in s |-> [(_, (Var{id}, T))] | error $[Variable [id] not defined].
+
+  declareFun : scope * ID * list(TYPE) * TYPE
+  declareFun(s, id, paramTs, retT) :-
+    declareVar(s, id, FUN(paramTs, retT)).
+
+  typeOfFun : scope * ID -> (list(TYPE) * TYPE)
+  typeOfFun(s, id) = (paramTs, retT) :-
+    typeOfVar(s, id) == FUN(paramTs, retT).
 
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-
