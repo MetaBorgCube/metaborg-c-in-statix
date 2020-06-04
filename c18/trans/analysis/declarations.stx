@@ -90,6 +90,12 @@ rules
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
   declsOk maps declOk(*, list(*))
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramTs s_fun}
+    declSpecsToType(s, declSpecs) == retTu,
+    typeOfPointer(p, retTu) == retT,
+    new s_fun,
+    paramsOk(s, s_fun, params) == paramTs,
+    declareFun(s, id, paramTs, retT).
   declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, _))])) :- {id Tu T}
     declSpecsToType(s, declSpecs) == Tu, // Assumption: there are *only* type specifiers in here
     typeOfPointer(p, Tu) == T,
