@@ -76,7 +76,7 @@ rules
   // Probably pass type from above and declare the variable in this rule
   declrtrOk(s, Declarator(_, IdDecl(id))) = id.
   declrtrOk(s, Declarator(_, DeclBracket(declrtr))) = declrtrOk(s, declrtr).
-//  declrtrOk(s, Declarator(NoPointer(), ArrayDecl())). // TODO
+  declrtrOk(s, Declarator(_, ArrayDecl(IdDecl(id), _))) = id. // TODO
 
   abstDeclrtrOk : scope * AbstractDeclarator
 
