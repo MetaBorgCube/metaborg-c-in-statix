@@ -105,6 +105,7 @@ rules
   typeOfUnExp(Sizeof(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Alignof(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Deref(), POINTER(T)) = T.
+  typeOfUnExp(Addr(), T) = POINTER(T).
     
 
 rules
