@@ -10,6 +10,7 @@ imports
 signature
   namespaces
     Var      : ID
+    FunSig   : ID
     Typedef  : ID
     Label    : ID
     Return   :
@@ -19,6 +20,7 @@ signature
 
   name-resolution labels P F
     resolve Var filter P* min $ < P
+    resolve FunSig filter P* min $ < P
     resolve Typedef filter P* min $ < P
     resolve Label filter P* F* min $ < P, $ < F, F < P
     resolve Return filter P* min $ < P
@@ -39,17 +41,18 @@ rules
 
   // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
   funDefOk : scope * FunctionDefinition
-  funDefOk(s, FunDef(declSpecs, Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun paramTs retT retTu}
+  funDefOk(s, FunDef(declSpecs, Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun paramIDs paramTs retT retTu qRes}
     declSpecsToType(s, declSpecs) == retTu,
     typeOfPointer(p, retTu) == retT,
     new s_fun,
     s_fun -P-> s,
     s_fun -> Return{} with type retT,
-    paramsOk(s, s_fun, params) == paramTs,
+    paramsOk(s, params) == (paramIDs, paramTs),
     declsOk(s_fun, decls),
     compStmtOk(s_fun, compStmt),
-    declareFun(s, id, paramTs, retT).
-    
+    defineFun(s, id, paramTs, retT),
+    declareVars(s_fun, paramIDs, paramTs).
+
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
     typeOfExp(s, e) == _. // TODO more constraints on this?
@@ -77,25 +80,26 @@ rules
 
   abstDeclrtrOk : scope * AbstractDeclarator
 
-  paramOk : scope * scope * ParameterDeclaration -> TYPE
-  paramsOk maps paramOk(*, *, list(*)) = list(*)
-  paramOk(s, s_fun, ParamDecl1(declSpecs, declrtr@Declarator(p, _))) = T :- {id Tu}
+  paramOk : scope * ParameterDeclaration -> (ID * TYPE)
+  paramsOk maps paramOk(*, list(*)) = (list(*), list(*))
+  paramOk(s, ParamDecl1(declSpecs, declrtr@Declarator(p, _))) = (id, T) :- {Tu}
     declSpecsToType(s, declSpecs) == Tu, // specified type
     typeOfPointer(p, Tu) == T,
-    declrtrOk(s, declrtr) == id, // declared type
-    declareVar(s_fun, id, T).
-//  paramOk(s, s_fun, ParamDecl2(declSpecs, NoAbstractDeclarator())).
-//  paramOk(s, s_fun, ParamDecl2(declSpecs, AbstractDeclarator2AbstractDeclarator-OPT(abstDeclrtr))). // TODO finish
+    declrtrOk(s, declrtr) == id. // declared type
+  paramOk(s, ParamDecl2(declSpecs, NoAbstractDeclarator())) = ("", T) :- // ID is not known nor used
+    declSpecsToType(s, declSpecs) == T.
+  paramOk(s, ParamDecl2(declSpecs, AbstractDeclarator2AbstractDeclarator-OPT(Pointer2AbstractDeclarator(p)))) = ("", T) :- {Tu}
+    declSpecsToType(s, declSpecs) == Tu,
+    typeOfPointer(Pointer2Pointer-OPT(p), Tu) == T.
 
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
   declsOk maps declOk(*, list(*))
-  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramTs s_fun}
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramTs s_fun qRes}
     declSpecsToType(s, declSpecs) == retTu,
     typeOfPointer(p, retTu) == retT,
-    new s_fun,
-    paramsOk(s, s_fun, params) == paramTs,
-    declareFun(s, id, paramTs, retT).
+    paramsOk(s, params) == (_, paramTs),
+    declareFunSig(s, id, paramTs, retT).
   declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, _))])) :- {id Tu T}
     declSpecsToType(s, declSpecs) == Tu, // Assumption: there are *only* type specifiers in here
     typeOfPointer(p, Tu) == T,
@@ -121,7 +125,7 @@ rules
 
 rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
-  declareVars maps declareVar(*, list(*), *)
+  declareVars maps declareVar(*, list(*), list(*))
   declareVar(s, id, T) :-
     s -> Var{id} with type T,
     type of Var{id} in s |-> [(_, (Var{id}, _))] | error $[Variable [id] already defined].
@@ -129,15 +133,48 @@ rules // declaring / resolving variables and functions
   typeOfVar : scope * ID -> TYPE
   typeOfVar(s, id) = T :- {id'}
 //    @id.ref := id', // was causing errors, explicated terms don't support annotations?
-    type of Var{id} in s |-> [(_, (Var{id}, T))] | error $[Variable [id] not defined].
+    type of Var{id} in s |-> [(_, (Var{id}, T)) | _] | error $[Variable [id] not defined].
 
-  declareFun : scope * ID * list(TYPE) * TYPE
-  declareFun(s, id, paramTs, retT) :-
-    declareVar(s, id, FUN(paramTs, retT)).
+ /**
+  * Definitie:
+  * - genereer een declaratie voor de definitie met Def{_} namespace
+  * - check dat het type overeenkomt met de 'dichtsbijzijnde' signature
+  * - check dat er geen andere definitie is met dezelfde naam
+  */
+  defineFun : scope * ID * list(TYPE) * TYPE
+  defineFun(s, id, paramTs, retT) :- {T}
+    T == FUN(paramTs, retT),
+    declareFunSig(s, id, paramTs, retT), // guarantee there's always a signature
+    declareVar(s, id, T).
+
+  /**
+   * Signature:
+   * - genereer een declaratie (unconditionally) met de Sig{_} namespace;
+   *   er mogen meerdere declaraties van een naam zijn in scope graphs
+   * - check dat andere declaraties met dezelfde naam hetzelfde type hebben
+   */
+  declareFunSig : scope * ID * list(TYPE) * TYPE
+  declareFunSig(s, id, paramTs, retT) :- {T Ts results}
+    T == FUN(paramTs, retT),
+    s -> FunSig{id} with type T,
+    type of FunSig{id} in s |-> results,
+    Ts == queryResultsToTypes(results),
+    equiTypes(T, Ts).
+
+  equiType : TYPE * TYPE
+  equiTypes maps equiType(*, list(*))
+  equiType(Ta, Tb) :-
+    Ta == Tb.
+
+  queryResultToType : (path * (occurrence * TYPE)) -> TYPE
+  queryResultsToTypes maps queryResultToType(list(*)) = list(*)
+  queryResultToType((_, (_, T))) = T.
 
   typeOfFun : scope * ID -> (list(TYPE) * TYPE)
-  typeOfFun(s, id) = (paramTs, retT) :-
-    typeOfVar(s, id) == FUN(paramTs, retT).
+  typeOfFun(s, id) = (paramTs, retT) :- {id' T}
+    @id.ref := id',
+    type of FunSig{id} in s |-> [(_, (FunSig{id'}, T)) | _],
+    T == FUN(paramTs, retT).
 
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-
