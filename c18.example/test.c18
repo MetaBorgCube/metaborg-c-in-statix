@@ -4,10 +4,20 @@ struct Option {
     int argument;
 };
 
+struct Thing {
+    struct Option option;
+    int meta;
+};
+
 int parse_options(int, char **, struct Option *, const void *cb, void *payload);
 
 
 int main(int argc, char **argv) {
+  struct Option opt = {**argv, "things", 0};
+  
+  struct Thing th = {opt, 1.0};
+  th.meta = 12;
+
   int a = argc;
   int i;
   {

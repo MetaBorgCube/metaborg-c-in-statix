@@ -11,6 +11,7 @@ imports
 signature
   namespaces
     Var      : ID
+    Member   : ID * int
     StructOrUnion : ID
     FunSig   : ID
     Typedef  : ID
@@ -22,6 +23,7 @@ signature
 
   name-resolution labels P F
     resolve Var filter P* min $ < P
+    resolve Member filter P* min $ < P
     resolve StructOrUnion filter P* min $ < P
     resolve FunSig filter P* min $ < P
     resolve Typedef filter P* min $ < P
@@ -73,6 +75,26 @@ rules
     lub(T, T') == T.
   initDeclrtrOk(s, _, Declarator2InitDeclarator(decl)) = id :-
     declrtrOk(s, decl) == id.
+  initDeclrtrOk(s, STRUCT(s_struct), InitDecl(decl, Initializer(is))) = id :-
+    declrtrOk(s, decl) == id,
+    initializersOk(s, s_struct, is, 0).
+    
+rules initializerOk : scope * scope * Initializer * int
+
+  initializerOk(s, s_struct, AssignExp2Initializer(Exp2AssignExp(e)), pos) :-
+    typeOfMemberAt(s_struct, pos) == typeOfExp(s, e).
+    
+  initializerOk(s, s_struct, Initializer(is), pos) :- {s_substruct}
+    typeOfMemberAt(s_struct, pos) == STRUCT(s_substruct),
+    initializersOk(s, s_substruct, is, 0).
+
+
+rules initializersOk : scope * scope * list(Initializer) * int
+
+  initializersOk(s, s_struct, [], pos).
+  initializersOk(s, s_struct, [i | is], pos) :-
+    initializerOk(s, s_struct, i, pos),
+    initializersOk(s, s_struct, is, #(pos + 1)).
 
   declrtrOk : scope * Declarator -> ID
   // TODO Handle A LOT of other cases
@@ -141,7 +163,7 @@ rules typeOfStructOrUnionDecl : scope * StructOrUnion * TypeID-OPT * list(Struct
 
   typeOfStructOrUnionDecl(s, Struct(), id, decls) = T :- {s_struct}
     new s_struct,
-    structDeclsOk(s, s_struct, decls),
+    structDeclsOk(s, s_struct, decls, 0),
     STRUCT(s_struct) == T,
     defineStructOrUnion(s, id, T).
     
@@ -151,20 +173,32 @@ rules defineStructOrUnion : scope * TypeID-OPT * TYPE
   defineStructOrUnion(s, TypeID2TypeID-OPT(id), T) :- {id'}
     declareStructOrUnion(s, id, T).    
     
-rules structDeclOk : scope * scope * StructDeclaration
-  structDeclsOk maps structDeclOk(*, *, list(*))
+rules structDeclOk : scope * scope * StructDeclaration * int -> int
 
-  structDeclOk(s, s_struct, StructDecl(qs, decls)) :- {T}
+  structDeclOk(s, s_struct, StructDecl(qs, decls), pos) = EPOS :- {T}
     declSpecsToType(s, specQualsToDeclSpecs(qs)) == T,
-    structMultiDeclOk(s, s_struct, T, decls).
+    structMultiDeclOk(s, s_struct, T, decls, pos) == EPOS.
     
-  structUniDeclOk : scope * scope * TYPE * StructDeclarator
-  structMultiDeclOk maps structUniDeclOk(*, *, *, list(*))
+rules structDeclsOk : scope * scope * list(StructDeclaration) * int
   
-  structUniDeclOk(s, s_struct, t, Declarator2StructDeclarator(d@Declarator(p, _))) :- {id T}
+  structDeclsOk(_, _, [], _).
+  structDeclsOk(s, s_struct, [d | ds], pos) :- {EPOS}
+    structDeclOk(s, s_struct, d, pos) == EPOS,
+    structDeclsOk(s, s_struct, ds, EPOS).
+    
+rules structUniDeclOk : scope * scope * TYPE * StructDeclarator * int
+  
+  structUniDeclOk(s, s_struct, t, Declarator2StructDeclarator(d@Declarator(p, _)), pos) :- {id T}
     typeOfPointer(p, t) == T,
     declrtrOk(s_struct, d) == id,
-    declareVar(s_struct, id, T).
+    declareMember(s_struct, id, pos, T).
+    
+rules structMultiDeclOk : scope * scope * TYPE * list(StructDeclarator) * int -> int
+
+  structMultiDeclOk(_, _, _, [], epos) = epos.
+  structMultiDeclOk(s, s_struct, t, [d | ds], pos) = EPOS :-
+    structUniDeclOk(s, s_struct, t, d, pos),
+    structMultiDeclOk(s, s_struct, t, ds, #(pos + 1)) == EPOS.
 
 rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
@@ -239,14 +273,37 @@ rules // declaring / resolving variables and functions
     @id.ref := id',
     Label{id} in s |-> [(_, (Label{id'}))] | error  $[use of undeclared label [id]].
     
-  declareStructOrUnion : scope * ID * TYPE
+rules declareStructOrUnion : scope * ID * TYPE
+
   declareStructOrUnion(s, id, T) :-
     s -> StructOrUnion{id} with type T,
     type of StructOrUnion{id} in s |-> [(_, (StructOrUnion{id}, _))] 
         | error $[Struct or union [id] already defined].
         
-  typeOfStructOrUnion : scope * ID -> TYPE
+rules typeOfStructOrUnion : scope * ID -> TYPE
+
   typeOfStructOrUnion(s, id) = T :- {id'}
     @id.ref := id',
     type of StructOrUnion{id} in s |-> [(_, (StructOrUnion{id'}, T))] 
         | error $[Struct or union [id] not defined]. 
+        
+rules declareMember : scope * ID * int * TYPE
+
+  declareMember(s, id, pos, T) :-
+    s -> Member{id pos} with type T,
+    type of Member{id pos} in s |-> [(_, (Member{id pos}, _))] | error $[Member [id] already defined].
+
+rules typeOfMember : scope * ID -> TYPE
+
+ typeOfMember(s, id) = T :-
+    type of Member{id _} in s |-> [(_, (Member{id _}, T)) | _] | error $[Member [id] not defined].
+    
+rules typeOfMemberAt : scope * int -> TYPE
+
+  typeOfMemberAt(s, pos) = T :- {id' T'}
+    type of Member{_ pos} in s |-> [(_, (Member{id' pos}, T')) | _] 
+        | error $[Member at position [pos] not defined],
+    type of Member{_ pos} in s |-> [(_, (Member{_ pos}, T)) | _]
+        | error $[Initializer of type [T] is not convertible to member [id'] of type [T']].
+      
+    
