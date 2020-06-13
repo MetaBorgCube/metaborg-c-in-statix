@@ -84,6 +84,11 @@ rules
     typeOfExp(s, callee) == FUN(Ta, Tr), // i.e. int -> int
     typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
     Ta' == Ta.
+    
+  typeOfExp(s, Proj(e, var)) = T :- {s_struct}
+     typeOfExp(s, e) == STRUCT(s_struct),
+     typeOfVar(s_struct, var) == T.
+    
 //  typeOfExp(s, Proj(e, ID-LEX2ID(id))) = T :-
 //    // lookup scope (type) of e
 //    // find 'id' in scope and unify with T

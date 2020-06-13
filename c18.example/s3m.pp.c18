@@ -1,0 +1,261 @@
+unsigned int max_sample_size = 64000;
+
+unsigned int ms_to_off(unsigned int ms_)
+{
+  return (* (ms_ + 2) << 8 | * (ms_ + 1)) * 16;
+}
+
+static char * strlcpy(char * dest, const char * src, Size_t size)
+{
+  strncpy(dest, src, size - 1);
+  * (dest + (size - 1)) = 0;
+  return dest;
+}
+
+static S3M_vinstrument_t * create_vinstr(UINT8 * u8, S3M_instrument_t * on_disk)
+{
+  char title [s3m_title_length + 1] = { 0 };
+  memcpy(title, (* on_disk).title, s3m_title_length);
+  UINT16 sample_size = (* on_disk).length;
+  if(sample_size > max_sample_size)
+    {
+      fprintf(stderr, "Warning: sample %s size %hu exceeds limit of %hu.\n", title, sample_size, (UINT16)max_sample_size);
+      sample_size = max_sample_size;
+    }
+  else
+    ;
+  S3M_vinstrument_t * vinstr = malloc(sizeof s3m_vinstrument_t + sample_size * sizeof(float));
+  assert(vinstr);
+  (* vinstr).on_disk = on_disk;
+  (* vinstr).sample_length = sample_size;
+  if(! ((* on_disk).flags & 4))
+    {
+      UINT8 * rawSample = (UINT8 *)(u8 + ms_to_off((* on_disk).memseg));
+      {
+        UINT16 i = 0;
+        for( ; i < sample_size; i += 1)
+          {
+            * ((* vinstr).sample + i) = * (rawSample + i) / 128.f - 1;
+            assert(* ((* vinstr).sample + i) <= 1);
+            assert(* ((* vinstr).sample + i) >= - 1);
+          }
+      }
+    }
+  else
+    {
+      UINT16 * rawSample = (UINT16 *)(u8 + ms_to_off((* on_disk).memseg));
+      {
+        UINT16 i = 0;
+        for( ; i < sample_size; i += 1)
+          {
+            * ((* vinstr).sample + i) = * (rawSample + i) / 65536.f - 0.5;
+            assert(* ((* vinstr).sample + i) <= 1);
+            assert(* ((* vinstr).sample + i) >= - 1);
+          }
+      }
+    }
+  memcpy((* vinstr).title, title, s3m_title_length + 1);
+  return vinstr;
+}
+
+static S3M_cell_t * read_pattern(S3M_t * s3m, UINT8 * u8)
+{
+  S3M_cell_t * cells = calloc(s3m_num_rows_per_pattern * s3m_num_channels, sizeof(S3M_cell_t));
+  assert(cells);
+  UINT16 length = * (UINT16 *)u8;
+  u8 += 2;
+  UINT8 previous_note [s3m_num_channels] = { 0 };
+  UINT8 previous_instrument [s3m_num_channels] = { 0 };
+  UINT8 previous_volume [s3m_num_channels] = { 0 };
+  {
+    int row = 0;
+    for( ; row < s3m_num_rows_per_pattern & & u8 < u8 + length; )
+      {
+        S3M_cell_t cell = { 0 };
+        cell.raw = * u8;
+        u8 += 1;
+        if(! cell.raw)
+          {
+            row += 1;
+            continue;
+          }
+        else
+          ;
+        UINT8 channel = cell.raw & s3m_num_channels - 1;
+        if(cell.raw & 32)
+          {
+            cell.note = * u8;
+            if(cell.note == 255)
+              cell.note = 0;
+            else
+              ;
+            if(cell.note)
+              {
+                * (previous_note + channel) = cell.note;
+              }
+            else
+              ;
+            cell.instrument = * (u8 + 1);
+            if(cell.instrument)
+              {
+                * (previous_instrument + channel) = cell.instrument;
+                * (previous_volume + channel) = 0;
+              }
+            else
+              ;
+            u8 += 2;
+          }
+        else
+          ;
+        if(cell.raw ^ 64 && ! (! (cell.raw ^ 32) && ! ! cell.note))
+          {
+            cell.note = * (previous_note + channel);
+          }
+        else
+          ;
+        if(cell.raw ^ 64 && ! (! (cell.raw ^ 32) && ! ! cell.instrument))
+          {
+            cell.instrument = * (previous_instrument + channel);
+          }
+        else
+          ;
+        if(cell.raw & 64)
+          {
+            cell.volume = * u8;
+            if(cell.volume > 64)
+              cell.volume = 0;
+            else
+              ;
+            if(cell.volume)
+              {
+                * (previous_volume + channel) = cell.volume;
+              }
+            else
+              ;
+            u8 += 1;
+          }
+        else
+          {
+            cell.volume = * (previous_volume + channel);
+          }
+        if(! cell.volume && cell.instrument)
+          {
+            cell.volume = (* (* * ((* s3m).instruments + (cell.instrument - 1))).on_disk).volume;
+          }
+        else
+          ;
+        if(cell.raw & 128)
+          {
+            cell.effect = * (u8 + 0);
+            cell.effect_info = * (u8 + 1);
+            u8 += 2;
+          }
+        else
+          ;
+        * s3m_get_cell(cells, channel, row) = cell;
+      }
+  }
+  return cells;
+}
+
+S3M_error_t s3m_open(void * buf, Off_t buf_size, S3M_t * s3m)
+{
+  s3m_assert_static_invariants( );
+  assert(buf);
+  assert(s3m);
+  (* s3m).hdr = buf;
+  if(! (! ((* (* s3m).hdr).magic1 != s3m_header_magic_1) && ! memcmp((* (* s3m).hdr).magic2, s3m_header_magic_2, sizeof s3m_header_magic_2 - 1)))
+    {
+      return s3m_e_bad_header_magic;
+    }
+  else
+    ;
+  (* s3m).tempo = (* (* s3m).hdr).initial_tempo;
+  (* s3m).speed = (* (* s3m).hdr).initial_speed;
+  UINT8 * u8 = buf;
+  UINT16 * u16 = buf;
+  (* s3m).orders = u8 + sizeof s3m_header_t;
+  (* s3m).instruments = malloc((* (* s3m).hdr).num_instruments * sizeof(S3M_vinstrument_t *));
+  assert((* s3m).instruments);
+  {
+    UINT16 i = 0;
+    for( ; i < (* (* s3m).hdr).num_instruments; i += 1)
+      {
+        UINT16 pp = * (u16 + (s3m_inpp_offset(s3m) / 2 + i)) * 16;
+        S3M_instrument_t * on_disk = (S3M_instrument_t *)(u8 + pp);
+        * ((* s3m).instruments + i) = create_vinstr(u8, on_disk);
+      }
+  }
+  (* s3m).patterns = malloc((* (* s3m).hdr).num_patterns * sizeof(S3M_cell_t *));
+  assert((* s3m).patterns);
+  {
+    UINT16 i = 0;
+    for( ; i < (* (* s3m).hdr).num_patterns; i += 1)
+      {
+        UINT16 pp = * (u16 + (s3m_papp_offset(s3m) / 2 + i)) * 16;
+        if(! pp)
+          {
+            * ((* s3m).patterns + i) = (void *)0;
+            continue;
+          }
+        else
+          ;
+        S3M_cell_t * cells = read_pattern(s3m, u8 + pp);
+        * ((* s3m).patterns + i) = cells;
+      }
+  }
+  return s3M_OK;
+}
+
+static const char * note_names [ ] = { "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-", "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" };
+
+static int note_periods [ ] = { 1712, 1616, 1524, 1440, 1356, 1280, 1208, 1140, 1076, 1016, 960, 907 };
+
+void s3m_note_to_text(UINT8 note, char * buf, Size_t len)
+{
+  if(note >> 4 == 0xF)
+    {
+      strlcpy(buf, "^^ ", len);
+    }
+  else
+    {
+      snprintf(buf, len, "%-2s%d", * (note_names + (note & 0xF)), (note >> 4) + 1);
+    }
+}
+
+void s3m_effect_to_text(UINT8 effect, UINT8 data, char * buf, Size_t len)
+{
+  if(! effect)
+    {
+      strlcpy(buf, "---", len);
+      return ;
+    }
+  else
+    ;
+  snprintf(buf, len, "%c%02hhX", 'A' + effect - 1, data);
+}
+
+void s3m_cell_to_text(S3M_cell_t * cell, char * buf, Size_t len)
+{
+  assert(cell);
+  Size_t note_buf_len = 5;
+  char note_buf [note_buf_len];
+  s3m_note_to_text((* cell).note, note_buf, note_buf_len);
+  Size_t effect_buf_len = 4;
+  char effect_buf [effect_buf_len];
+  s3m_effect_to_text((* cell).effect, (* cell).effect_info, effect_buf, effect_buf_len);
+  if((* cell).raw)
+    {
+      snprintf(buf, len, "\033[34;1m%s \033[36;1m%02hhu\033[32;1mv%02hhu \033[33m%s\033[0m", note_buf, (* cell).instrument, (* cell).volume, effect_buf);
+    }
+  else
+    {
+      strlcpy(buf, "\033[34;1m--- \033[36;1m--\033[32;1m -- \033[33m---\033[0m", len);
+    }
+}
+
+double s3m_get_note_freq(S3M_vinstrument_t * vinstr, UINT8 note)
+{
+  double period = 8368.0 * 16 * (* (note_periods + (note & 0xF)) >> (note >> 4)) / (* (* vinstr).on_disk).c5_freq;
+  return 14317056.0 / period;
+}

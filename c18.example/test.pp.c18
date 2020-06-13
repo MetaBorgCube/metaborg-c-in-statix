@@ -1,0 +1,8 @@
+void puts(char * str)
+{
+}
+
+int main(int argc, char * * argv)
+{
+  puts(* (argv + 0));
+}

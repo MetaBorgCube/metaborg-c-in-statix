@@ -6,10 +6,12 @@ imports
   analysis/expressions
   analysis/statements
   analysis/types
+  analysis/util-bool
 
 signature
   namespaces
     Var      : ID
+    StructOrUnion : ID
     FunSig   : ID
     Typedef  : ID
     Label    : ID
@@ -20,6 +22,7 @@ signature
 
   name-resolution labels P F
     resolve Var filter P* min $ < P
+    resolve StructOrUnion filter P* min $ < P
     resolve FunSig filter P* min $ < P
     resolve Typedef filter P* min $ < P
     resolve Label filter P* F* min $ < P, $ < F, F < P
@@ -111,6 +114,10 @@ rules
     initDeclrtrOk(s, T, i) == id,
     declareVar(s, id, T).
     
+  // Typedefs, structs, unions, enums
+  declOk(s, Decl(declSpecs, [])) :-
+    declSpecsToType(s, declSpecs) == _.
+    
   typeOfPointer : Pointer-OPT * TYPE -> TYPE
   typeOfPointer(NoPointer(), T) = T.
   typeOfPointer(Pointer2Pointer-OPT(Pointer(po, q)), T) = POINTER(typeOfPointer(po, T)).
@@ -122,6 +129,42 @@ rules
   declSpecsToTypeSpecs([]) = [].
   declSpecsToTypeSpecs([TypeSpecifier2DeclarationSpecifier(ts) | dss]) = [ts | declSpecsToTypeSpecs(dss)].
   declSpecsToTypeSpecs([_ | dss]) = declSpecsToTypeSpecs(dss).
+  
+  specQualsToDeclSpecs : list(SpecifierQualifier) -> list(DeclarationSpecifier)
+  specQualsToDeclSpecs([]) = [].
+  specQualsToDeclSpecs([TypeSpecifier2SpecifierQualifier(ts) | sqs]) = 
+      [TypeSpecifier2DeclarationSpecifier(ts) | specQualsToDeclSpecs(sqs)].
+  specQualsToDeclSpecs([TypeQualifier2SpecifierQualifier(tq) | sqs]) = 
+      [TypeQualifier2DeclarationSpecifier(tq) | specQualsToDeclSpecs(sqs)].
+  
+rules typeOfStructOrUnionDecl : scope * StructOrUnion * TypeID-OPT * list(StructDeclaration) -> TYPE
+
+  typeOfStructOrUnionDecl(s, Struct(), id, decls) = T :- {s_struct}
+    new s_struct,
+    structDeclsOk(s, s_struct, decls),
+    STRUCT(s_struct) == T,
+    defineStructOrUnion(s, id, T).
+    
+rules defineStructOrUnion : scope * TypeID-OPT * TYPE
+
+  defineStructOrUnion(_, NoTypeID(), _).
+  defineStructOrUnion(s, TypeID2TypeID-OPT(id), T) :- {id'}
+    declareStructOrUnion(s, id, T).    
+    
+rules structDeclOk : scope * scope * StructDeclaration
+  structDeclsOk maps structDeclOk(*, *, list(*))
+
+  structDeclOk(s, s_struct, StructDecl(qs, decls)) :- {T}
+    declSpecsToType(s, specQualsToDeclSpecs(qs)) == T,
+    structMultiDeclOk(s, s_struct, T, decls).
+    
+  structUniDeclOk : scope * scope * TYPE * StructDeclarator
+  structMultiDeclOk maps structUniDeclOk(*, *, *, list(*))
+  
+  structUniDeclOk(s, s_struct, t, Declarator2StructDeclarator(d@Declarator(p, _))) :- {id T}
+    typeOfPointer(p, t) == T,
+    declrtrOk(s_struct, d) == id,
+    declareVar(s_struct, id, T).
 
 rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
@@ -195,3 +238,15 @@ rules // declaring / resolving variables and functions
   resolveLabel(s, id) :- {id'}
     @id.ref := id',
     Label{id} in s |-> [(_, (Label{id'}))] | error  $[use of undeclared label [id]].
+    
+  declareStructOrUnion : scope * ID * TYPE
+  declareStructOrUnion(s, id, T) :-
+    s -> StructOrUnion{id} with type T,
+    type of StructOrUnion{id} in s |-> [(_, (StructOrUnion{id}, _))] 
+        | error $[Struct or union [id] already defined].
+        
+  typeOfStructOrUnion : scope * ID -> TYPE
+  typeOfStructOrUnion(s, id) = T :- {id'}
+    @id.ref := id',
+    type of StructOrUnion{id} in s |-> [(_, (StructOrUnion{id'}, T))] 
+        | error $[Struct or union [id] not defined]. 

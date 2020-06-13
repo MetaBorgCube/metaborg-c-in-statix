@@ -1,4 +1,14 @@
-int main(int a) {
+struct Option {
+    char shortName;
+    const char *longName;
+    int argument;
+};
+
+int parse_options(int, char **, struct Option *, const void *cb, void *payload);
+
+
+int main(int argc, char **argv) {
+  int a = argc;
   int i;
   {
     lbl: return i;
