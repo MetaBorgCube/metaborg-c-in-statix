@@ -56,7 +56,16 @@ rules
     declsOk(s_fun, decls),
     compStmtOk(s_fun, compStmt),
     defineFun(s, id, paramTs, retT),
-    declareVars(s_fun, paramIDs, paramTs).
+    declareVars(s_fun, paramIDs, paramTs),
+    mainOk(s, id, paramTs, retT) | error "parameter types on 'main' have incorrect types".
+
+  mainOk : scope * ID * list(TYPE) * TYPE
+  mainOk(s, id, _, _) :-
+	id != "main".
+  mainOk(s, "main", [], INT()).
+  mainOk(s, "main", [INT()], INT()) :-
+	try {"a" == "b"} | warning "only one parameter on 'main' declaration".
+  mainOk(s, "main", [INT(), POINTER(POINTER(CHAR()))], INT()).
 
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
