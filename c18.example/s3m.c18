@@ -4,6 +4,10 @@ unsigned int ms_to_off(unsigned int *ms_) {
   return ((((ms_)[2] << 8) | (ms_)[1]) * 16);
 }
 
+typedef unsigned long long Size_t;
+
+void strncpy(char *dest, const char *src, Size_t size);
+
 static char *strlcpy(char *dest, const char *src, Size_t size) {
     strncpy(dest, src, size - 1);
     dest[size - 1] = 0;
