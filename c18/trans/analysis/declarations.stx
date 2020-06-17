@@ -135,6 +135,9 @@ rules initializersOk : scope * scope * list(Initializer) * int
     typeOfPointer(p, Tu) == T,
     initDeclrtrOk(s, T, i) == id,
     declareVar(s, id, T).
+  declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
+    declSpecsToType(s, declSpecs) == T,
+    declareTypedef(s, id, T).
     
   // Typedefs, structs, unions, enums
   declOk(s, Decl(declSpecs, [])) :-

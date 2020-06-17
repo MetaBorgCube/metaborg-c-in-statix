@@ -29,6 +29,7 @@ strategies
 
   spec-order = ![
     Typedef(),
+    TypedefName(),
     Static(),
     Extern(),
     ThreadLocal(),
@@ -55,7 +56,6 @@ strategies
     Bool(),
     StructOrUnion(),
     StructOrUnionDecl(),
-    TypedefName(),
     Restrict()
   ]
   
