@@ -1,6 +1,6 @@
 unsigned int max_sample_size = 64000;
 
-unsigned int ms_to_off(unsigned int ms_) {
+unsigned int ms_to_off(unsigned int *ms_) {
   return ((((ms_)[2] << 8) | (ms_)[1]) * 16);
 }
 
