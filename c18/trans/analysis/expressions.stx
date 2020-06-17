@@ -80,10 +80,15 @@ rules
 //  typeOfExp(s, Cast(TypedefName2(ts, a), e)) = T :-
 //    typeOfType(s, ts) == T.
 
+  typeOfExp(s, Call(Var(id), args)) = Tr :- {Ta Ta'}
+    typeOfFun(s, id) == (Ta, Tr),
+    typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
+    Ta' == Ta                  | error $[Function expects types [Ta], not [Ta']] @args.
+
   typeOfExp(s, Call(callee, args)) = Tr :- {Ta Ta'}
     typeOfExp(s, callee) == FUN(Ta, Tr), // i.e. int -> int
     typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
-    Ta' == Ta.
+    Ta' == Ta                  | error $[Function expects types [Ta], not [Ta']] @args.
     
   typeOfExp(s, Proj(e, var)) = T :- {s_struct}
      typeOfExp(s, e) == STRUCT(s_struct),

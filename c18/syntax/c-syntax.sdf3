@@ -154,7 +154,7 @@ context-free syntax
   DirectDeclarator.ArrayDecl = <<DirectDeclarator> [<ConstExp-OPT>]>
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
   
-  ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}+>> 
+  ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}*>>
   ParameterTypeList.ParamListVarArgs = <<{ParameterDeclaration ", "}+> , ...> 
   ParameterDeclaration.ParamDecl1 = <<DeclarationSpecifier+> <Declarator>> 
   ParameterDeclaration.ParamDecl2 = <<DeclarationSpecifier+> <AbstractDeclarator-OPT>>

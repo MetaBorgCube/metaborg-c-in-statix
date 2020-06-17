@@ -67,7 +67,6 @@ rules
 //    declareVars(s, ids, T).
   
   initDeclrtrOk : scope * TYPE * InitDeclarator -> ID
-  // TODO Instead of AssignExp, a list of AssignExps can also occur (array initializer)
   // TODO When assigning, types do not have to match exactly. For example, assignments between int types are (mostly) allowed.
   initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}
     declrtrOk(s, decl) == id, // declared type
@@ -78,6 +77,21 @@ rules
   initDeclrtrOk(s, STRUCT(s_struct), InitDecl(decl, Initializer(is))) = id :-
     declrtrOk(s, decl) == id,
     initializersOk(s, s_struct, is, 0).
+  initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDecl(IdDecl(id), c)), Initializer(vals))) = id :-
+	initializerTypesOk(s, T, vals).
+
+  arrayLengthOk : ConstExp-OPT * list(Initializer)
+  arrayLengthOk(NoConstExp(), _).
+  arrayLengthOk(ConstExp2ConstExp-OPT(Exp2ConstExp(DecInt(n))), vals). // TODO compare n to length of vals
+
+rules initializerTypesOk : scope * TYPE * list(Initializer)
+	initializerTypesOk(s, T, [i]) :- {e}
+		i == AssignExp2Initializer(Exp2AssignExp(e)),
+		typeOfExp(s, e) == T.
+	initializerTypesOk(s, T, [i | is]) :- {e}
+		i == AssignExp2Initializer(Exp2AssignExp(e)),
+		typeOfExp(s, e) == T,
+		initializerTypesOk(s, T, is).
     
 rules initializerOk : scope * scope * Initializer * int
 
@@ -97,11 +111,13 @@ rules initializersOk : scope * scope * list(Initializer) * int
     initializersOk(s, s_struct, is, #(pos + 1)).
 
   declrtrOk : scope * Declarator -> ID
-  // TODO Handle A LOT of other cases
-  // Probably pass type from above and declare the variable in this rule
   declrtrOk(s, Declarator(_, IdDecl(id))) = id.
   declrtrOk(s, Declarator(_, DeclBracket(declrtr))) = declrtrOk(s, declrtr).
-  declrtrOk(s, Declarator(_, ArrayDecl(IdDecl(id), _))) = id. // TODO
+  declrtrOk(s, Declarator(_, ArrayDecl(IdDecl(id), ConstExp2ConstExp-OPT(
+													Exp2ConstExp(
+													Constant2Exp(
+													IntegerConstant2Constant(
+													DecInt(_)))))))) = id. // TODO
 
   abstDeclrtrOk : scope * AbstractDeclarator
 
@@ -138,6 +154,11 @@ rules initializersOk : scope * scope * list(Initializer) * int
   declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
     declSpecsToType(s, declSpecs) == T,
     declareTypedef(s, id, T).
+  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDecl(_, _)), _)])) :- {id Tu T}
+	declSpecsToType(s, declSpecs) == Tu,
+	typeOfPointer(p, Tu) == T,
+	initDeclrtrOk(s, T, i) == id,
+	declareVar(s, id, POINTER(T)).
     
   // Typedefs, structs, unions, enums
   declOk(s, Decl(declSpecs, [])) :-
@@ -207,8 +228,8 @@ rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
   declareVars maps declareVar(*, list(*), list(*))
   declareVar(s, id, T) :-
-    s -> Var{id} with type T,
-    type of Var{id} in s |-> [(_, (Var{id}, _))] | error $[Variable [id] already defined].
+    s -> Var{id} with type T.
+//    type of Var{id} in s |-> [(_, (Var{id}, _))] | error $[Variable [id] already defined].
 
   typeOfVar : scope * ID -> TYPE
   typeOfVar(s, id) = T :- {id'}

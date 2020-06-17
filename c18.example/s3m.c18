@@ -6,6 +6,8 @@ unsigned int ms_to_off(unsigned int *ms_) {
 
 typedef unsigned long long Size_t;
 
+typedef int *intptr; // TODO this should be allowed, but is not yet implemented
+
 void strncpy(char *dest, const char *src, Size_t size);
 
 static char *strlcpy(char *dest, const char *src, Size_t size) {
@@ -13,6 +15,15 @@ static char *strlcpy(char *dest, const char *src, Size_t size) {
     dest[size - 1] = 0;
     return dest;
 }
+
+//struct S3M_vinstrument_t {
+//  int on_disk;
+//};
+
+//// This should also work
+//typedef struct bla {
+//  int on_disk;
+//} S3M_vinstrument_t;
 
 static S3M_vinstrument_t *create_vinstr(UINT8 *u8, S3M_instrument_t *on_disk) {
     char title[s3m_title_length + 1] = {0};
@@ -52,6 +63,9 @@ static S3M_vinstrument_t *create_vinstr(UINT8 *u8, S3M_instrument_t *on_disk) {
 
     return vinstr;
 }
+
+typedef long UINT8;
+typedef long long UINT16;
 
 static S3M_cell_t *read_pattern(S3M_t *s3m, UINT8 *u8) {
     S3M_cell_t *cells = calloc(s3m_num_rows_per_pattern * s3m_num_channels, sizeof(S3M_cell_t));
@@ -130,6 +144,15 @@ static S3M_cell_t *read_pattern(S3M_t *s3m, UINT8 *u8) {
 
     return cells;
 }
+
+void s3m_assert_static_invariants();
+typedef int Off_t;
+
+struct S3M_t {
+  int a;
+};
+
+typedef S3M_t S3M_t;
 
 S3M_error_t s3m_open(void *buf, Off_t buf_size, S3M_t *s3m) {
     s3m_assert_static_invariants();

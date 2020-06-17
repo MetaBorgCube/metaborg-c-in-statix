@@ -1,38 +1,14 @@
-struct Option {
-    char shortName;
-    const char *longName;
-    int argument;
-};
-
-struct Thing {
-    struct Option option;
-    int meta;
-};
-
-int parse_options(int, char **, struct Option *, const void *cb, void *payload);
-
-
 int main(int argc, char **argv) {
-  struct Option opt = {**argv, "things", 0};
+//  char str[] = "abc"; // lub issue
+//  char str_l[3] = "abc"; // lub issue
   
-  struct Thing th = {opt, 1.0};
-  th.meta = 12;
-
-  int a = argc;
-  int i;
-  {
-    lbl: return i;
-  }
+  int x[] = {1, 2, 3};
+  int y[5] = {1, 2, 3};
+  int z[1] = {1, 2, 3}; // ERROR
+  int a[]; // ERROR
+  int b[1];
   
-  goto non_existent;
-  goto lbl;
+//  int n[5] = {[4]=5,[0]=1,2,3,4} // holds 1,2,3,4,5
   
-  {
-    {
-      goto lbl;
-    }
-    goto lbl; // expect error: not defined
-  }
-  
-  return a;
+  return 0;
 }
