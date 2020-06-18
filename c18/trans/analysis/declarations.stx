@@ -63,6 +63,7 @@ rules
   mainOk(s, id, _, _) :-
 	id != "main".
   mainOk(s, "main", [], INT()).
+  mainOk(s, "main", [VOID()], INT()).
   mainOk(s, "main", [INT()], INT()) :-
 	try {"a" == "b"} | warning "only one parameter on 'main' declaration".
   mainOk(s, "main", [INT(), POINTER(POINTER(CHAR()))], INT()).
