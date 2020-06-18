@@ -150,28 +150,37 @@ rules initializersOk : scope * scope * list(Initializer) * int
     typeOfPointer(p, retTu) == retT,
     paramsOk(s, params) == (_, paramTs),
     declareFunSig(s, id, paramTs, retT).
-  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, _))])) :- {id Tu T}
-    declSpecsToType(s, declSpecs) == Tu, // Assumption: there are *only* type specifiers in here
-    typeOfPointer(p, Tu) == T,
-    initDeclrtrOk(s, T, i) == id,
-    declareVar(s, id, T).
-  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, _), _)])) :- {id Tu T Ti}
-    declSpecsToType(s, declSpecs) == Tu, // Assumption: there are *only* type specifiers in here
-    typeOfPointer(p, Tu) == T,
-    initDeclrtrOk(s, T, i) == id,
-    declareVar(s, id, T).
   declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
     declSpecsToType(s, declSpecs) == T,
     declareTypedef(s, id, T).
   declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDecl(_, _)), _)])) :- {id Tu T}
-	declSpecsToType(s, declSpecs) == Tu,
-	typeOfPointer(p, Tu) == T,
-	initDeclrtrOk(s, T, i) == id,
-	declareVar(s, id, POINTER(T)).
+  	declSpecsToType(s, declSpecs) == Tu,
+  	typeOfPointer(p, Tu) == T,
+  	initDeclrtrOk(s, T, i) == id,
+  	declareVar(s, id, POINTER(T)).
+	declOk(s, Decl(declSpecs, declrtrs)) :- {Tu}
+	 declSpecsToType(s, declSpecs) == Tu,
+	 multiDeclOk(s, Tu, declrtrs).
     
   // Typedefs, structs, unions, enums
   declOk(s, Decl(declSpecs, [])) :-
     declSpecsToType(s, declSpecs) == _.
+    
+rules uniDeclOk : scope * TYPE * InitDeclarator
+  multiDeclOk maps uniDeclOk(*, *, list(*))
+
+  uniDeclOk(s, tu, i@Declarator2InitDeclarator(d@Declarator(_, _))) :-
+    declWithDeclrtr(s, tu, i, d).
+    
+  uniDeclOk(s, tu, i@InitDecl(d@Declarator(_, _), _)) :-
+    declWithDeclrtr(s, tu, i, d).
+    
+rules declWithDeclrtr : scope * TYPE * InitDeclarator * Declarator
+    
+  declWithDeclrtr(s, Tu, i, Declarator(p, _)) :- {T id}
+    typeOfPointer(p, Tu) == T,
+    initDeclrtrOk(s, T, i) == id,
+    declareVar(s, id, T).
     
   typeOfPointer : Pointer-OPT * TYPE -> TYPE
   typeOfPointer(NoPointer(), T) = T.

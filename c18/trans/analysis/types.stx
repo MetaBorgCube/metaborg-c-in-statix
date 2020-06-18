@@ -211,6 +211,11 @@ rules intConvRank : TYPE -> int
   // fix it to int for now
   intConvRank(ENUM()) = intConvRank(INT()).
   
+  // Should be warnings at some point when converting from ints to floats or above (as not all
+  // integers are representable as floats)
+  intConvRank(FLOAT()) = 100.
+  intConvRank(DOUBLE()) = 200.
+  
 rules signed : TYPE
 
   signed(SCHAR()).
@@ -243,5 +248,10 @@ rules ilub : TYPE * TYPE -> TYPE
     
 rules projIntEq : int * int * TYPE * TYPE -> TYPE
 
-  projIntEq(i, i, T, _) = T.
-  projIntEq(_, _, _, T) = T.
+  projIntEq(i, i, T, _) = convertIntType(T).
+  projIntEq(_, _, _, T) = convertIntType(T).
+  
+rules convertIntType : TYPE -> TYPE
+  
+  convertIntType(Ti) = To :-
+    try {Ti == To} | error $[[Ti] is not implicitly convertible to [To]].
