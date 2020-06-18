@@ -1,4 +1,4 @@
-module analysis/declarations
+module analysis/arrays
 language c18
 
 fixture [[
@@ -32,3 +32,36 @@ test array (no initializer, no length) [[
 test array intializer (no initializer, length) [[
   int x[8];
 ]] analysis succeeds
+
+test nested array (2d, length, no initializer) [[
+int [8][8];
+]] analysis succeeds
+
+test nested array (2d, length, initializer) [[
+int [2][2] = {
+	{1, 0},
+	{0, 1}
+};
+]] analysis succeeds
+
+test nested array (2d, no length, intializer) [[
+int [][] = {
+	{0, 1},
+	{1, 0}
+};
+]] analysis succeeds
+
+test nested array (2d, length, inner length violation) [[
+int [2][1] = {
+	{0, 1},
+	{1, 0}
+};
+]] analysis fails
+
+test nested array (2d, no length, inner length mismatch) [[
+int [][] = {
+	{0, 1},
+	{1, 0, 1}
+};
+]] analysis fails
+
