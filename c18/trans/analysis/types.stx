@@ -254,4 +254,4 @@ rules projIntEq : int * int * TYPE * TYPE -> TYPE
 rules convertIntType : TYPE -> TYPE
   
   convertIntType(Ti) = To :-
-    try {Ti == To} | error $[[Ti] is not implicitly convertible to [To]].
+    Ti == To | error $[[Ti] is not implicitly convertible to [To]].
