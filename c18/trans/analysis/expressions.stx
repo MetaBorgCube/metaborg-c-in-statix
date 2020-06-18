@@ -26,10 +26,20 @@ rules
 
   typeOfExp(s, Comma(e1, e2)) = typeOfExp(s, e2).
   
+  typeOfExp(s, Assign(e1, AssignAdd(), e2)) = T :- {T2}
+    typeOfExp(s, e1) == T,
+    typeOfExp(s, e2) == T2,
+    typeOfAddSub(T, T2) == T.
+    
+  typeOfExp(s, Assign(e1, AssignMin(), e2)) = T :- {T2}
+    typeOfExp(s, e1) == T,
+    typeOfExp(s, e2) == T2,
+    typeOfAddSub(T, T2) == T.
+  
   typeOfExp(s, Assign(e1, op, e2)) = T :- {T2}
     typeOfExp(s, e1) == T,
     typeOfExp(s, e2) == T2,
-    lub(T2, T) == T.
+    typeOfAddSub(T, T2) == T.
     
   typeOfExp(s, LAnd(e1, e2)) = INT() :-
     intType(typeOfExp(s, e1)),
