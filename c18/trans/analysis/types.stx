@@ -35,7 +35,7 @@ signature
   COMPLEX 			: TYPE -> TYPE
   IMAGINARY			: TYPE -> TYPE
   STRUCT        : scope -> TYPE
-  UNION					: list(TYPE) -> TYPE
+  UNION					: scope -> TYPE
   ENUM					: TYPE
 
   // TODO type qualifiers

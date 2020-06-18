@@ -209,6 +209,12 @@ rules typeOfStructOrUnionDecl : scope * StructOrUnion * TypeID-OPT * list(Struct
     STRUCT(s_struct) == T,
     defineStructOrUnion(s, id, T).
     
+  typeOfStructOrUnionDecl(s, Union(), id, decls) = T :- {s_union}
+    new s_union,
+    structDeclsOk(s, s_union, decls, 0),
+    UNION(s_union) == T,
+    defineStructOrUnion(s, id, T).
+    
 rules defineStructOrUnion : scope * TypeID-OPT * TYPE
 
   defineStructOrUnion(_, NoTypeID(), _).
