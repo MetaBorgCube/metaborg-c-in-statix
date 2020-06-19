@@ -1,0 +1,40 @@
+module analysis/enum
+language c18
+
+test enums have loose types [[
+enum RGB {
+  rgb_blue  = 0x00FF0000,
+  rgb_green = 0x0000FF00,
+  rgb_red   = 0x000000FF
+};
+
+enum CMYK {
+  cmyk_yellow  = 0xFF000000,
+  cmyk_cyan    = 0x00FF0000,
+  cmyk_magenta = 0x0000FF00,
+  cmyk_key     = 0x000000FF
+};
+
+int main(void) {
+  enum CMYK white = rgb_blue | rgb_green | rgb_red;
+  return white;
+}
+]] analysis succeeds
+
+test enums are ints [[
+enum RGB {
+  rgb_blue  = 0x00FF0000,
+  rgb_green = 0x0000FF00,
+  rgb_red   = 0x000000FF
+};
+
+int main(void) {
+  int val = rgb_blue * 2;
+}
+]] analysis succeeds
+
+test enum must be declared [[
+int main(void) {
+  enum Table tab;
+}
+]] analysis fails

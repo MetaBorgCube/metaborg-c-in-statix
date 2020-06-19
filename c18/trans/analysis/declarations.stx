@@ -13,6 +13,7 @@ signature
     Var      : ID
     Member   : ID * int
     StructOrUnion : ID
+    Enum     : ID
     FunSig   : ID
     Typedef  : ID
     Label    : ID
@@ -25,6 +26,7 @@ signature
     resolve Var filter P* min $ < P
     resolve Member filter P* min $ < P
     resolve StructOrUnion filter P* min $ < P
+    resolve Enum filter P* min $ < P
     resolve FunSig filter P* min $ < P
     resolve Typedef filter P* min $ < P
     resolve Label filter P* F* min $ < P, $ < F, F < P
@@ -201,7 +203,28 @@ rules declWithDeclrtr : scope * TYPE * InitDeclarator * Declarator
       [TypeSpecifier2DeclarationSpecifier(ts) | specQualsToDeclSpecs(sqs)].
   specQualsToDeclSpecs([TypeQualifier2SpecifierQualifier(tq) | sqs]) = 
       [TypeQualifier2DeclarationSpecifier(tq) | specQualsToDeclSpecs(sqs)].
-  
+
+
+rules typeOfEnum : scope * TypeID-OPT * list(Enumerator) -> TYPE
+
+  typeOfEnum(s, TypeID2TypeID-OPT(id), es) = T :-
+    T == ENUM(),
+    declareEnum(s, id),
+    enumeratorsOk(s, T, es).
+
+  typeOfEnum(s, NoTypeID(), es) = T :-
+    T == ENUM(),
+    enumeratorsOk(s, T, es).
+
+
+rules enumeratorOk : scope * TYPE * Enumerator
+
+  enumeratorOk(s, t, Enumerator(id, _)) :-
+    declareVar(s, id, t).
+
+  enumeratorsOk maps enumeratorOk(*, *, list(*))
+
+
 rules typeOfStructOrUnionDecl : scope * StructOrUnion * TypeID-OPT * list(StructDeclaration) -> TYPE
 
   typeOfStructOrUnionDecl(s, Struct(), id, decls) = T :- {s_struct}
@@ -355,4 +378,16 @@ rules typeOfMemberAt : scope * int -> TYPE
     type of Member{_ pos} in s |-> [(_, (Member{_ pos}, T)) | _]
         | error $[Initializer of type [T] is not convertible to member [id'] of type [T']].
       
+
+rules declareEnum : scope * ID
+
+  declareEnum(s, id) :-
+    s -> Enum{id},
+    Enum{id} in s |-> [(_, (Enum{id}))] | error $[Enum [id] already defined].
+
+
+rules enumDeclared : scope * ID
+
+  enumDeclared(s, id) :-
+    Enum{id} in s |-> [(_, (Enum{id})) | _] | error $[Enum [id] not defined].
     

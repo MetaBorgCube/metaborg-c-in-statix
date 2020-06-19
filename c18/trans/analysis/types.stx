@@ -132,6 +132,12 @@ rules // typing  rules
   typeOfType(s, [StructOrUnionSpecifier2TypeSpecifier(StructOrUnionDecl(_, id))]) =
     typeOfStructOrUnion(s, id).
 
+  typeOfType(s, [EnumSpecifier2TypeSpecifier(EnumSpec(id, es))]) =
+    typeOfEnum(s, id, es).
+
+  typeOfType(s, [EnumSpecifier2TypeSpecifier(EnumSpecDecl(id))]) = ENUM() :-
+    enumDeclared(s, id).
+
   // typedef names
   typeOfType(s, [TypedefName1(x)]) = typeOfTypedef(s, x). // TODO perform lookup for 'x'
 rules // type helpers
@@ -151,6 +157,7 @@ rules intType : TYPE
   intType(INT()).
   intType(LONG()).
   intType(LONGLONG()).
+  intType(ENUM()).
   intType(T) :- {ST}
     signEquiv(ST, T).
 
