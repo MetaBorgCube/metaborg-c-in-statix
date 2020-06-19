@@ -169,6 +169,23 @@ rules initializersOk : scope * scope * list(Initializer) * int
   declOk(s, Decl(declSpecs, [])) :-
     declSpecsToType(s, declSpecs) == _.
     
+    
+rules typeOfAbsDecl : scope * TYPE * AbstractDeclarator -> TYPE
+
+  typeOfAbsDecl(s, tu, DirDecl(po, dad)) = typeOfPointer(po, typeOfDirAbsDecl(s, tu, dad)). 
+  typeOfAbsDecl(_, tu, Pointer2AbstractDeclarator(p)) = typeOfPointer(Pointer2Pointer-OPT(p), tu).
+  
+  
+rules typeOfDirAbsDecl : scope * TYPE * DirectAbstractDeclarator -> TYPE
+
+  typeOfDirAbsDecl(s, tu, AbsDecl(ad)) = typeOfAbsDecl(s, tu, ad).
+  typeOfDirAbsDecl(s, tu, AArrayDecl(NoDirectAbstractDeclarator(), _)) = POINTER(tu).
+  typeOfDirAbsDecl(s, tu, AArrayDecl(DirectAbstractDeclarator2DirectAbstractDeclarator-OPT(dad), _))
+      = typeOfDirAbsDecl(s, POINTER(tu), dad).
+// TODO: function pointers
+//  typeOfDirAbsDecl(s, tu, AFunDecl(NoDirectAbstractDeclarator(), NoParameterTypeList()
+
+
 rules uniDeclOk : scope * TYPE * InitDeclarator
   multiDeclOk maps uniDeclOk(*, *, list(*))
 

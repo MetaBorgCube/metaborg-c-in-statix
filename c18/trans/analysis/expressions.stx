@@ -87,8 +87,10 @@ rules
   typeOfExp(s, AlignofT(_)) = ULONGLONG().
 
 //  TODO: improve/desugar cast syntax?    
-//  typeOfExp(s, Cast(TypedefName2(ts, a), e)) = T :-
-//    typeOfType(s, ts) == T.
+  typeOfExp(s, Cast(TypedefName2(ts, NoAbstractDeclarator()), e)) =
+    typeOfType(s, declSpecsToTypeSpecs(specQualsToDeclSpecs(ts))).
+  typeOfExp(s, Cast(TypedefName2(ts, AbstractDeclarator2AbstractDeclarator-OPT(a)), e)) =
+    typeOfAbsDecl(s, typeOfType(s, declSpecsToTypeSpecs(specQualsToDeclSpecs(ts))), a).
 
   typeOfExp(s, Call(Var(id), args)) = Tr :- {Ta Ta'}
     typeOfFun(s, id) == (Ta, Tr),
