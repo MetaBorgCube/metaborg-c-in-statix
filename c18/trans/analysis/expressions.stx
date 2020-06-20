@@ -86,6 +86,8 @@ rules
   typeOfExp(s, SizeofT(_)) = ULONGLONG().
   typeOfExp(s, AlignofT(_)) = ULONGLONG().
 
+  typeOfExp(s, Null()) = POINTER(VOID()).
+
 //  TODO: improve/desugar cast syntax?    
   typeOfExp(s, Cast(TypedefName2(ts, NoAbstractDeclarator()), e)) =
     typeOfType(s, declSpecsToTypeSpecs(specQualsToDeclSpecs(ts))).
