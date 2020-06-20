@@ -39,7 +39,7 @@ rules
   typeOfExp(s, Assign(e1, op, e2)) = T :- {T2}
     typeOfExp(s, e1) == T,
     typeOfExp(s, e2) == T2,
-    typeOfAddSub(T, T2) == T.
+    lub(T, T2) == T.
     
   typeOfExp(s, LAnd(e1, e2)) = INT() :-
     intType(typeOfExp(s, e1)),
@@ -104,9 +104,9 @@ rules
     typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
     Ta' == Ta                  | error $[Function expects types [Ta], not [Ta']] @args.
     
-  typeOfExp(s, Proj(e, var)) = T :- {s_struct}
-     typeOfExp(s, e) == STRUCT(s_struct),
-     typeOfMember(s_struct, var) == T.
+  typeOfExp(s, Proj(e, var)) = T :- {TS}
+     typeOfExp(s, e) == TS,
+     typeOfSouMem(s, TS, var) == T.
     
 //  typeOfExp(s, Proj(e, ID-LEX2ID(id))) = T :-
 //    // lookup scope (type) of e
@@ -115,8 +115,21 @@ rules
 //    // lookup scope (type) of e
 //    // find 'id' in scope and unify with T
   typeOfExp(s, Var(id)) = typeOfVar(s, id).
-  
-  
+
+
+rules typeOfSouMem : scope * TYPE * ID -> TYPE
+
+  typeOfSouMem(_, STRUCT(s_struct), var) = typeOfMember(s_struct, var).
+
+  typeOfSouMem(s, STRUCT_REF(s_id), var) =
+      typeOfSouMem(s, typeOfStructOrUnion(s, s_id), var).
+
+  typeOfSouMem(_, UNION(s_union), var) = typeOfMember(s_union, var).
+
+  typeOfSouMem(s, UNION_REF(u_id), var) =
+      typeOfSouMem(s, typeOfStructOrUnion(s, u_id), var).
+
+
 rules typeOfAddSub : TYPE * TYPE -> TYPE
   
   typeOfAddSub(POINTER(T1), T2) = POINTER(T1) :- intType(T2).

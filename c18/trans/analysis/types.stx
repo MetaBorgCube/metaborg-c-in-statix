@@ -36,6 +36,8 @@ signature
   IMAGINARY			: TYPE -> TYPE
   STRUCT        : scope -> TYPE
   UNION					: scope -> TYPE
+  STRUCT_REF    : ID -> TYPE
+  UNION_REF     : ID -> TYPE
   ENUM					: TYPE
 
   // TODO type qualifiers
@@ -128,9 +130,12 @@ rules // typing  rules
   
   typeOfType(s, [StructOrUnionSpecifier2TypeSpecifier(StructOrUnion(sou, id, decls))]) = 
     typeOfStructOrUnionDecl(s, sou, id, decls).
-    
-  typeOfType(s, [StructOrUnionSpecifier2TypeSpecifier(StructOrUnionDecl(_, id))]) =
-    typeOfStructOrUnion(s, id).
+
+  typeOfType(s, [StructOrUnionSpecifier2TypeSpecifier(StructOrUnionDecl(Struct(), id))]) =
+    STRUCT_REF(id).
+
+  typeOfType(s, [StructOrUnionSpecifier2TypeSpecifier(StructOrUnionDecl(Union(), id))]) =
+    UNION_REF(id).
 
   typeOfType(s, [EnumSpecifier2TypeSpecifier(EnumSpec(id, es))]) =
     typeOfEnum(s, id, es).
