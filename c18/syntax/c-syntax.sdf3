@@ -254,8 +254,8 @@ context-free syntax
   Statement.Goto = <
     goto <ID>;
   > 
-  Statement.Continue = <continue;> 
-  Statement.Break    = <break;> 
+  Statement.Continue = <continue ;> 
+  Statement.Break    = <break ;> 
   Statement.Return   = <return <Exp-OPT>;>
 
   InitClause = Exp
@@ -318,8 +318,7 @@ context-free syntax
   Exp.PostDec   = <<Exp>--> 
   Exp.Var       = ID 
   Exp           = Constant 
-  Exp.String    = STRING 
-  Exp.LChar     = CHAR
+  Exp.String    = STRING
   Exp.Null      = <NULL>
   Exp           = <(<Exp>)> {bracket}
 
@@ -422,6 +421,7 @@ lexical restrictions
 
   "+" -/- [\+]
   "-" -/- [\-]
+  "&" -/- [\&]
   
 template options
   ID = keyword {reject}
