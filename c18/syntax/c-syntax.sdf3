@@ -282,7 +282,7 @@ context-free syntax
   Exp.And = <<Exp> & <Exp>> {left}
   
   Exp.EqNeq = <<Exp> <EqNeqOp> <Exp>> {left}
-  EqNeqOp.Eq = <==>
+  EqNeqOp.Eq = [==]
   EqNeqOp.Neq = <!=>
   Exp.Order = <<Exp> <OrderOp> <Exp>> {left}
   OrderOp.Lt = [<]
@@ -296,7 +296,7 @@ context-free syntax
   
   Exp.AddSub = <<Exp> <AddSubOp> <Exp>> {left}
   AddSubOp.Add = <+>
-  AddSubOp.Sub = <->
+  AddSubOp.Sub = [-]
   
   Exp.MulDivMod = <<Exp> <MulDivModOp> <Exp>> {left}
   MulDivModOp.Mul = <*>
@@ -305,7 +305,7 @@ context-free syntax
   
   Exp.Cast      = <(<TypeName>)<Exp>> 
   Exp.PreInc    = <++<Exp>> 
-  Exp.PreDec    = <--<Exp>> 
+  Exp.PreDec    = [--[Exp]]
   Exp.UnOp      = <<UnaryOp> <Exp>>
   Exp.SizeofT   = <sizeof(<TypeName>)>
   Exp.AlignofT  = <_Alignof(<TypeName>)>
@@ -314,7 +314,7 @@ context-free syntax
   Exp.Proj      = <<Exp>.<ID>> 
   Exp.DerefProj = [[Exp] -> [ID]]
   Exp.PostInc   = <<Exp>++> 
-  Exp.PostDec   = <<Exp>--> 
+  Exp.PostDec   = [[Exp]--]
   Exp.Var       = ID 
   Exp           = Constant 
   Exp.String    = STRING
