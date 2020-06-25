@@ -22,13 +22,16 @@ rules
   stmtOk(_, stmt) :-
     stmt != Case(_, _) | error "'case' statement not in switch statement" @stmt,
     stmt != Default(_) | error "'default' statement not in switch statement" @stmt.
-  stmtOk(s, Exp(e)) :- // TODO show warning "expression result unused"
-    typeOfExp(s, e) == _.
+  stmtOk(s, Exp(e)) :- {T}
+    typeOfExp(s, e) == T.
+//  try { T == VOID() } | warning $[Expression result of type [T] discarded]. // Clutters assignments
   stmtOk(s, If(e, then)) :- {T}
-    typeOfExp(s, e) == _, // TODO all types allowed?
+    typeOfExp(s, e) == T,
+    scalarType(T),
     stmtOk(s, then).
   stmtOk(s, IfElse(e, then, else)) :- {T}
-    typeOfExp(s, e) == _, // TODO all types allowed?
+    typeOfExp(s, e) == T,
+    scalarType(T),
     stmtOk(s, then),
     stmtOk(s, else).
   stmtOk(s, Switch(e, case)) :- {T} // TODO switch should not accept _Bool, which is an int type now.
@@ -51,7 +54,7 @@ rules
     s -F-> s_for,
     initClauseOk(s_for, init),
     typeOfExp(s_for, e1) == T,
-    intType(T), // TODO condition should be intType?
+    scalarType(T), // TODO condition should be intType?
     typeOfExp(s_for, e2) == _. // TODO type does not matter?
   stmtOk(s, Goto(id)) :-
     resolveLabel(s, id).
@@ -79,4 +82,6 @@ rules
     lub(T, Te) == T.
   switchCaseOk(s, _, Statement2BlockItem(Default(stmt))) :-
     stmtOk(s, stmt).
+  switchCaseOk(s, _, bi) :- 
+    blockItemOk(s, bi).
   
