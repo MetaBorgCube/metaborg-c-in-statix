@@ -57,9 +57,16 @@ rules
     paramsOk(s, params) == (paramIDs, paramTs),
     declsOk(s_fun, decls),
     compStmtOk(s_fun, compStmt),
-    defineFun(s, id, paramTs, retT),
+    defineFun(s, id, FUN(paramTs, retT)),
     declareVars(s_fun, paramIDs, paramTs),
     mainOk(s, id, paramTs, retT) | error "parameter types on 'main' have incorrect types".
+    
+    
+rules foldVoidParam : list(TYPE) -> list(TYPE)
+
+  foldVoidParam([VOID()]) = [].
+  foldVoidParam(P) = P.
+
 
   mainOk : scope * ID * list(TYPE) * TYPE
   mainOk(s, id, _, _) :-
@@ -148,11 +155,18 @@ rules initializersOk : scope * scope * list(Initializer) * int
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
   declsOk maps declOk(*, list(*))
-  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramTs s_fun qRes}
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramTs paramTVs s_fun qRes}
     declSpecsToType(s, declSpecs) == retTu,
     typeOfPointer(p, retTu) == retT,
-    paramsOk(s, params) == (_, paramTs),
-    declareFunSig(s, id, paramTs, retT).
+    paramsOk(s, params) == (_, paramTVs),
+    foldVoidParam(paramTVs) == paramTs,
+    declareFunSig(s, id, FUN(paramTs, retT)).
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamListVarArgs(params))))])) :- {retTu retT paramTs paramTVs s_fun qRes}
+    declSpecsToType(s, declSpecs) == retTu,
+    typeOfPointer(p, retTu) == retT,
+    paramsOk(s, params) == (_, paramTVs),
+    foldVoidParam(paramTVs) == paramTs,
+    declareFunSig(s, id, VARFUN(paramTs, retT)).
   declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
     declSpecsToType(s, declSpecs) == T,
     declareTypedef(s, id, T).
@@ -312,11 +326,10 @@ rules // declaring / resolving variables and functions
   * - check dat het type overeenkomt met de 'dichtsbijzijnde' signature
   * - check dat er geen andere definitie is met dezelfde naam
   */
-  defineFun : scope * ID * list(TYPE) * TYPE
-  defineFun(s, id, paramTs, retT) :- {T}
-    T == FUN(paramTs, retT),
-    declareFunSig(s, id, paramTs, retT), // guarantee there's always a signature
-    declareVar(s, id, T).
+  defineFun : scope * ID * TYPE
+  defineFun(s, id, t) :-
+    declareFunSig(s, id, t), // guarantee there's always a signature
+    declareVar(s, id, t).
 
   /**
    * Signature:
@@ -324,13 +337,12 @@ rules // declaring / resolving variables and functions
    *   er mogen meerdere declaraties van een naam zijn in scope graphs
    * - check dat andere declaraties met dezelfde naam hetzelfde type hebben
    */
-  declareFunSig : scope * ID * list(TYPE) * TYPE
-  declareFunSig(s, id, paramTs, retT) :- {T Ts results}
-    T == FUN(paramTs, retT),
-    s -> FunSig{id} with type T,
+  declareFunSig : scope * ID * TYPE
+  declareFunSig(s, id, t) :- {Ts results}
+    s -> FunSig{id} with type t,
     type of FunSig{id} in s |-> results,
     Ts == queryResultsToTypes(results),
-    equiTypes(T, Ts).
+    equiTypes(t, Ts).
 
   equiType : TYPE * TYPE
   equiTypes maps equiType(*, list(*))
@@ -341,11 +353,10 @@ rules // declaring / resolving variables and functions
   queryResultsToTypes maps queryResultToType(list(*)) = list(*)
   queryResultToType((_, (_, T))) = T.
 
-  typeOfFun : scope * ID -> (list(TYPE) * TYPE)
-  typeOfFun(s, id) = (paramTs, retT) :- {id' T}
+  typeOfFun : scope * ID -> TYPE
+  typeOfFun(s, id) = T :- {id'}
     @id.ref := id',
-    type of FunSig{id} in s |-> [(_, (FunSig{id'}, T)) | _],
-    T == FUN(paramTs, retT).
+    type of FunSig{id} in s |-> [(_, (FunSig{id'}, T)) | _].
 
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-
