@@ -1,0 +1,17 @@
+module analysis/util
+
+imports
+  signatures/c-syntax-sig
+
+signature
+
+  sorts Bool constructors
+    True : Bool
+    False : Bool
+
+  rules
+    length : list(Initializer) -> int
+    length([]) = 0.
+    length([t | ts]) = l :- {lt}
+  	  lt == length(ts),
+  	  l #= lt + 1.

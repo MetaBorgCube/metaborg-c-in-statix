@@ -1,7 +1,0 @@
-module analysis/util-bool
-
-signature
-
-  sorts Bool constructors
-    True : Bool
-    False : Bool

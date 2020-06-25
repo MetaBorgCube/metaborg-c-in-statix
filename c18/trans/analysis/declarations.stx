@@ -6,7 +6,7 @@ imports
   analysis/expressions
   analysis/statements
   analysis/types
-  analysis/util-bool
+  analysis/util
 
 signature
   namespaces
@@ -81,7 +81,7 @@ rules
   initDeclrtrOk : scope * TYPE * InitDeclarator -> ID
   // TODO When assigning, types do not have to match exactly. For example, assignments between int types are (mostly) allowed.
   initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}
-    declrtrOk(s, decl) == id, // declared type
+    declrtrOk(s, decl) == id,
     typeOfExp(s, e) == T', // expression type
     lub(T, T') == T.
   initDeclrtrOk(s, _, Declarator2InitDeclarator(decl)) = id :-

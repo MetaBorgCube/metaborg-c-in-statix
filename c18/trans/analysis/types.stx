@@ -3,7 +3,7 @@ module analysis/types
 imports
   signatures/c18-sig
   
-  analysis/util-bool
+  analysis/util
   analysis/declarations
 
 //signature // to also consider qualifiers 
@@ -146,6 +146,7 @@ rules // typing  rules
 
   // typedef names
   typeOfType(s, [TypedefName1(x)]) = typeOfTypedef(s, x). // TODO perform lookup for 'x'
+
 rules // type helpers
 	// Only permit float, double and long double as complex types
 	complexSubtype : list(TypeSpecifier) -> TYPE

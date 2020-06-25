@@ -38,7 +38,9 @@ rules
   desugar: PostDec(e) -> AddSub(PreDec(e), Add(), DecInt("1"))
   
   desugar: LOr(a, b) -> UnOp(Not(), LAnd(UnOp(Not(), a), UnOp(Not(), b)))
-  
+
+  desugar: InitializerComma(is) -> Initializer(is)
+
 rules
 
   desugar-pointers-all = bottomup(try(desugar-pointers))
