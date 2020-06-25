@@ -6,6 +6,7 @@
  
 typedef struct FILE FILE;
  
+extern int fprintf(FILE *, const char *, ...);
 extern void *calloc(unsigned long nmemb, unsigned long long size);
 extern void setbuf(FILE *stream, char *buf);
 extern int strcmp(const char *s1, const char *s2);
@@ -14,16 +15,20 @@ extern void exit(int);
 extern int getc(FILE *stream);
 extern void perror(const char *s);
 extern void fclose(FILE *);
+extern void putchar(int);
+extern int getchar(void);
 
 extern int eof;
 extern FILE *stdout;
 extern FILE *stdin;
+extern FILE *stderr;
  
 struct Bfi { char cmd; struct Bfi *next, *jmp; };
 struct Mem { char val; struct Mem *next, *prev; };
  
 int main(int argc, char **argv)
 {
+
     FILE * ifd;
     int ch;
     struct Bfi *p=NULL, *n=NULL, *j=NULL, *pgm = NULL;
@@ -62,20 +67,20 @@ int main(int argc, char **argv)
     }
  
     /* Ignore any left over '[' commands */
-    while(j) { p = j; j = j->jmp; p->jmp = 0; p->cmd = ' '; }
+    while(j) { p = j; j = j->jmp; p->jmp = NULL; p->cmd = (char) ' '; }
  
     if (ifd!=stdin) fclose(ifd);
  
     /* Execute the loaded BF program */
     for(n=pgm; n; n=n->next)
-        switch(n->cmd)
+        switch((int) n->cmd)
         {
             case '+':
-              m->val++; 
+              m->val = (char) (m->val + 1); 
               break;
-            case '-': m->val--; break;
+            case '-': m->val = (char) (m->val - 1); break;
             case '.': putchar(m->val); break;
-            case ',': if((ch=getchar())!=eof) m->val=ch; break;
+            case ',': if((ch=getchar())!=eof) m->val=(char)ch; break;
             case '[': if (m->val == 0) n=n->jmp; break;
             case ']': if (m->val != 0) n=n->jmp; break;
             case '<':
@@ -86,7 +91,7 @@ int main(int argc, char **argv)
                 break;
             case '>':
                 if (m->next == 0) {
-                    if ((m->next = calloc(1,sizeof*m)) == 0) {
+                    if ((m->next = calloc(1, (unsigned long long) sizeof*m)) == 0) {
                         perror(argv[0]); exit(1);
                     }
                     m->next->prev = m;
