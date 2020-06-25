@@ -23,14 +23,14 @@ signature
     type : occurrence -> TYPE
 
   name-resolution labels P F
-    resolve Var filter P* min $ < P
-    resolve Member filter P* min $ < P
-    resolve StructOrUnion filter P* min $ < P
-    resolve Enum filter P* min $ < P
-    resolve FunSig filter P* min $ < P
-    resolve Typedef filter P* min $ < P
-    resolve Label filter P* F* min $ < P, $ < F, F < P
-    resolve Return filter P* min $ < P
+    resolve Var           filter P*    min $ < P
+    resolve Member        filter P*    min $ < P
+    resolve StructOrUnion filter P*    min $ < P
+    resolve Enum          filter P*    min $ < P
+    resolve FunSig        filter P*    min $ < P
+    resolve Typedef       filter P*    min $ < P
+    resolve Label         filter P* F* min $ < P, $ < F, F < P
+    resolve Return        filter P*    min $ < P
 
 
 rules
