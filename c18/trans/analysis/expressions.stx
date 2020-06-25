@@ -13,7 +13,6 @@ rules
   typeOfExp(_, Constant2Exp(CharacterConstant2Constant(_))) = INT().
   typeOfExp(_, Constant2Exp(FloatingConstant2Constant(_))) = FLOAT().
   typeOfExp(_, String(_)) = POINTER(CHAR()).
-  typeOfExp(_, LChar(_)) = CHAR().
 
   typeOfExp(s, UnOp(op, e)) = T :- {Te}
     typeOfExp(s, e) == Te,
@@ -42,8 +41,8 @@ rules
     lub(T, T2) == T.
     
   typeOfExp(s, LAnd(e1, e2)) = INT() :-
-    intType(typeOfExp(s, e1)),
-    intType(typeOfExp(s, e2)).
+    scalarType(typeOfExp(s, e1)),
+    scalarType(typeOfExp(s, e2)).
     
   typeOfExp(s, Ior(e1, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
@@ -61,8 +60,8 @@ rules
     numberRules(T1, T2) == T.
     
   typeOfExp(s, EqNeq(e1, op, e2)) = INT() :-
-    intType(typeOfExp(s, e1)),
-    intType(typeOfExp(s, e2)).
+    scalarType(typeOfExp(s, e1)),
+    scalarType(typeOfExp(s, e2)).
     
   typeOfExp(s, Order(e1, op, e2)) = INT() :-
     intType(typeOfExp(s, e1)),
@@ -97,12 +96,12 @@ rules
   typeOfExp(s, Call(Var(id), args)) = Tr :- {Ta Ta'}
     typeOfFun(s, id) == (Ta, Tr),
     typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
-    Ta' == Ta                  | error $[Function expects types [Ta], not [Ta']] @args.
+    lubs(Ta', Ta) == Ta        | error $[Function expects types [Ta], not [Ta']] @args.
 
   typeOfExp(s, Call(callee, args)) = Tr :- {Ta Ta'}
     typeOfExp(s, callee) == FUN(Ta, Tr), // i.e. int -> int
     typeOfExps(s, args) == Ta' | error $[Function expects types [Ta], not [Ta']] @args,
-    Ta' == Ta                  | error $[Function expects types [Ta], not [Ta']] @args.
+    lubs(Ta', Ta) == Ta        | error $[Function expects types [Ta], not [Ta']] @args.
     
   typeOfExp(s, Proj(e, var)) = T :- {TS}
      typeOfExp(s, e) == TS,
@@ -143,6 +142,7 @@ rules
   typeOfUnExp(Alignof(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Deref(), POINTER(T)) = T.
   typeOfUnExp(Addr(), T) = POINTER(T).
+  typeOfUnExp(Not(), _) = INT().
     
 
 rules
