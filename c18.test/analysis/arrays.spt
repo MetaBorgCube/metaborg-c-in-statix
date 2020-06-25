@@ -34,32 +34,32 @@ test array intializer (no initializer, length) [[
 ]] analysis succeeds
 
 test nested array (2d, length, no initializer) [[
-int [8][8];
+int x[8][8];
 ]] analysis succeeds
 
 test nested array (2d, length, initializer) [[
-int [2][2] = {
+int x[2][2] = {
 	{1, 0},
 	{0, 1}
 };
 ]] analysis succeeds
 
 test nested array (2d, no length, intializer) [[
-int [][] = {
+int x[][] = {
 	{0, 1},
 	{1, 0}
 };
 ]] analysis succeeds
 
 test nested array (2d, length, inner length violation) [[
-int [2][1] = {
+int x[2][1] = {
 	{0, 1},
 	{1, 0}
 };
 ]] analysis fails
 
 test nested array (2d, no length, inner length mismatch) [[
-int [][] = {
+int x[][] = {
 	{0, 1},
 	{1, 0, 1}
 };

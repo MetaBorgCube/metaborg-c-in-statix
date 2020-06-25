@@ -26,3 +26,28 @@ struct Person
     float salary;
 } person1, person2, p[20];
 ]] analysis succeeds
+
+test designated initializer [[
+struct Person
+{
+    char name[50];
+    int citNo;
+    float salary;
+};
+
+Person p = {
+	.citNo = 8,
+	.salary = 1.5f
+};
+]] analysis succeeds
+
+test bit field [[
+struct Packed_struct {
+   unsigned int f1:1;
+   unsigned int f2:1;
+   unsigned int f3:1;
+   unsigned int f4:1;
+   unsigned int type:4;
+   unsigned int my_int:9;
+} pack;
+]] analysis succeeds

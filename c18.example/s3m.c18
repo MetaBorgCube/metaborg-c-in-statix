@@ -245,6 +245,8 @@ static int note_periods[] = {
      907
 };
 
+void snprintf(char *buf, Size_t len, const char *s, const char *note, long i);
+
 void s3m_note_to_text(UINT8 note, char *buf, Size_t len) {
     if ((note >> 4) == 0xF) {
         strlcpy(buf, "^^ ", len);
