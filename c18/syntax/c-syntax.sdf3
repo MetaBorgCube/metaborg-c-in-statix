@@ -125,10 +125,8 @@ context-free syntax
     enum <TypeID>
   > 
 
-sorts DirectDeclarator-OPT ParameterTypeList-OPT Pointer-OPT
+sorts ParameterTypeList-OPT Pointer-OPT
 context-free syntax
-  DirectDeclarator-OPT                    = DirectDeclarator
-  DirectDeclarator-OPT.NoDirectDeclarator = <>
 
   ParameterTypeList-OPT                     = ParameterTypeList
   ParameterTypeList-OPT.NoParameterTypeList = <>
@@ -151,7 +149,8 @@ context-free syntax
   
   DirectDeclarator.IdDecl = ID 
   DirectDeclarator.DeclBracket = <(<Declarator>)> 
-  DirectDeclarator.ArrayDecl = <<DirectDeclarator> [<ConstExp-OPT>]>
+  DirectDeclarator.ArrayDecl = <<DirectDeclarator> []>
+  DirectDeclarator.ArrayDeclLength = <<DirectDeclarator> [<ConstExp>]>
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
   
   ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}*>>
@@ -322,12 +321,9 @@ context-free syntax
   Exp.Null      = <NULL>
   Exp           = <(<Exp>)> {bracket}
 
-sorts ConstExp ConstExp-OPT AssignExp
+sorts ConstExp AssignExp
 
 context-free syntax
-
-  ConstExp-OPT = ConstExp
-  ConstExp-OPT.NoConstExp = <>
 
   ConstExp  = Exp 
   AssignExp = Exp 
