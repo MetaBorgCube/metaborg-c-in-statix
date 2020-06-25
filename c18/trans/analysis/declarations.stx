@@ -73,11 +73,12 @@ rules
   initClauseOk : scope * InitClause
   initClauseOk(s, Exp2InitClause(e)) :-
     typeOfExp(s, e) == _. // TODO more constraints on this?
-//  initClauseOk(s, ForInitDecl(declSpecs, initDeclrtrs)) :- {t T ids}
-//    declSpecsToType(s, declSpecs) == T, // specified type
-//    initDeclrtrsOk(s, T, initDeclrtrs) == ids,
-//    declareVars(s, ids, T).
-  
+
+  initClauseOptOk : scope * InitClause-OPT
+  initClauseOptOk(_, NoInitClause()).
+  initClauseOptOk(s_for, InitClause2InitClause-OPT(init)) :-
+	initClauseOk(s_for, init).
+
   initDeclrtrOk : scope * TYPE * InitDeclarator -> ID
   // TODO When assigning, types do not have to match exactly. For example, assignments between int types are (mostly) allowed.
   initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}

@@ -18,7 +18,8 @@ rules
     typeOfExp(s, e) == Te,
     typeOfUnExp(op, Te) == T.
 
-  typeOfExp(s, Comma(e1, e2)) = typeOfExp(s, e2).
+  typeOfExp(s, Comma(e1, e2)) = typeOfExp(s, e2) :-
+	typeOfExp(s, e1) == _.
   
   typeOfExp(s, Assign(e1, AssignAdd(), e2)) = T :- {T2}
     typeOfExp(s, e1) == T,
@@ -103,6 +104,11 @@ rules
      typeOfSouMem(s, TS, var) == T.
 
   typeOfExp(s, Var(id)) = typeOfVar(s, id).
+
+rules
+  typeOfExpOpt : scope * Exp-OPT -> TYPE
+  typeOfExpOpt(s, NoExp()) = T.
+  typeOfExpOpt(s, Exp2Exp-OPT(e)) = typeOfExp(s, e).
 
 
 rules typeOfSouMem : scope * TYPE * ID -> TYPE

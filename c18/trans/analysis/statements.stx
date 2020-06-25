@@ -19,9 +19,10 @@ rules
   stmtOk(s, Label(id, stmt)) :-
     declareLabel(s, id),
     stmtOk(s, stmt).
-  stmtOk(_, stmt) :-
-    stmt != Case(_, _) | error "'case' statement not in switch statement" @stmt,
-    stmt != Default(_) | error "'default' statement not in switch statement" @stmt.
+  stmtOk(_, Case(_, _)) :-
+    false | error "'case' statement not in switch statement".
+  stmtOk(_, Default(_)) :-
+    false | error "'default' statement not in switch statement".
   stmtOk(s, Exp(e)) :- {T}
     typeOfExp(s, e) == T.
 //  try { T == VOID() } | warning $[Expression result of type [T] discarded]. // Clutters assignments
@@ -42,20 +43,19 @@ rules
     typeOfExp(s, e) == T,
     intType(T) | error $[statement requires expression of integer type ('[T]' invalid)] @e, // switch should have int type
     switchCasesOk(s, T, cases).
-  stmtOk(s, While(e, body)) :-
-    typeOfExp(s, e) == _,
-    stmtOk(s, body).
   stmtOk(s, DoWhile(body, e)) :-
     typeOfExp(s, e) == _,
     stmtOk(s, body).
-  stmtOk(s, For(InitClause2InitClause-OPT(init), Exp2Exp-OPT(e1), Exp2Exp-OPT(e2), body)) :- {s_for T}
+  stmtOk(s, For(init_opt, e1_opt, e2_opt, body)) :- {s_for T}
     new s_for,
     s_for -P-> s,
     s -F-> s_for,
-    initClauseOk(s_for, init),
-    typeOfExp(s_for, e1) == T,
+    initClauseOptOk(s_for, init_opt),
+    typeOfExpOpt(s_for, e1_opt) == T,
     scalarType(T), // TODO condition should be intType?
-    typeOfExp(s_for, e2) == _. // TODO type does not matter?
+    typeOfExpOpt(s_for, e2_opt) == _, // TODO type does not matter?
+    stmtOk(s_for, body).
+
   stmtOk(s, Goto(id)) :-
     resolveLabel(s, id).
   stmtOk(s, Return(Exp2Exp-OPT(e))) :- {T Tr}
@@ -66,6 +66,8 @@ rules
     type of Return{} in s |-> [(_, (Return{}, VOID()))]  | error "non-void function 'x' should return a value".
   stmtOk(s, CompoundStatement2Statement(compStmt)) :-
     compStmtOk(s, compStmt).
+
+  stmtOk(s, Nop()).
 
   blockItemOk : scope * BlockItem
   blockItemsOk maps blockItemOk(*, list(*))
