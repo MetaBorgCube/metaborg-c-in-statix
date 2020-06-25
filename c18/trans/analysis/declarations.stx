@@ -372,7 +372,7 @@ rules declareStructOrUnion : scope * ID * TYPE
 rules typeOfStructOrUnion : scope * ID -> TYPE
 
   typeOfStructOrUnion(s, id) = T :- {id'}
-    @id.ref := id',
+//    @id.ref := id',
     type of StructOrUnion{id} in s |-> [(_, (StructOrUnion{id'}, T))] 
         | error $[Struct or union [id] not defined]. 
         
