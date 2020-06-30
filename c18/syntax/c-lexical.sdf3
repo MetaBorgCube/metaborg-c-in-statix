@@ -68,6 +68,7 @@ lexical syntax
   CharChar = "\\" [ntvbrfa\\\?\'\"]
   CharChar = "\\ooo"
   CharChar = "\\x" [0-9a-fA-F] [0-9a-fA-F]
+  CharChar = "\\0"
 
 lexical sorts STRING // StringChar BackSlashChar
 lexical syntax // strings
