@@ -35,10 +35,26 @@ struct Person
     float salary;
 };
 
-Person p = {
-	.citNo = 8,
-	.salary = 1.5f
+struct Person p = {
+	"John",
+	8
 };
+]] analysis succeeds
+
+test fieldwise intializer [[
+struct Person
+{
+    char name[50];
+    int citNo;
+    float salary;
+} p;
+
+int main() {
+	p.name = "John";
+	p.salary = 8.f;
+	
+	return 0;
+}
 ]] analysis succeeds
 
 test bit field [[

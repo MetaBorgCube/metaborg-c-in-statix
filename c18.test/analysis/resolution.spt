@@ -1,0 +1,11 @@
+module analysis/resolution
+language c18
+
+test resolve var name correctly [[
+int main() {
+  int [[count]] = 0;
+  [[count]]++;
+  
+  return 0;
+}
+]] resolve #2 to #1

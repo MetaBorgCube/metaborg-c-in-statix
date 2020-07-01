@@ -47,7 +47,6 @@ signature
   POINTER : TYPE -> TYPE
 
 rules // typing  rules
-	// TODO Find a way to accept specifiers in arbitrary order
   typeOfType : scope * list(TypeSpecifier) -> TYPE
 
   // void

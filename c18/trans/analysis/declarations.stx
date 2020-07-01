@@ -312,13 +312,13 @@ rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
   declareVars maps declareVar(*, list(*), list(*))
   declareVar(s, id, T) :-
-    s -> Var{id} with type T.
-//    type of Var{id} in s |-> [(_, (Var{id}, _))] | error $[Variable [id] already defined].
+    s -> Var{id} with type T,
+    type of Var{id} in s |-> [(_, (Var{id}, _))] | error $[Variable [id] already defined].
 
   typeOfVar : scope * ID -> TYPE
   typeOfVar(s, id) = T :- {id'}
-//    @id.ref := id', // was causing errors, explicated terms don't support annotations?
-    type of Var{id} in s |-> [(_, (Var{id}, T)) | _] | error $[Variable [id] not defined].
+    @id.ref := id', // was causing errors, explicated terms don't support annotations?
+    type of Var{id} in s |-> [(_, (Var{id'}, T)) | _] | error $[Variable [id] not defined].
 
  /**
   * Definitie:
@@ -366,7 +366,7 @@ rules // declaring / resolving variables and functions
   typeOfTypedef : scope * ID -> TYPE
   typeOfTypedef(s, id) = T :- {id'}
     @id.ref := id',
-    type of Typedef{id} in s |-> [(_, (Typedef{id'}, T))] | error $[Type [id] not defined].
+    type of Typedef{id} in s |-> [(_, (Typedef{id'}, T)) | _] | error $[Type [id] not defined].
 
   declareLabel : scope * ID
   declareLabel(s, id) :-
@@ -376,7 +376,7 @@ rules // declaring / resolving variables and functions
   resolveLabel : scope * ID
   resolveLabel(s, id) :- {id'}
     @id.ref := id',
-    Label{id} in s |-> [(_, (Label{id'}))] | error  $[use of undeclared label [id]].
+    Label{id} in s |-> [(_, (Label{id'})) | _] | error  $[use of undeclared label [id]].
     
 rules declareStructOrUnion : scope * ID * TYPE
 

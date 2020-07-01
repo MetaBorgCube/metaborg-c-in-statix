@@ -1,100 +1,13 @@
-typedef struct S_chanode {
-	struct S_chanode *next;
-	long icurr;
-} Chanode_t;
+extern void printf(char *s, ...);
+extern void scanf(char *s, ...);
+extern void gets(char *s);
 
-typedef struct S_chastore {
-	Chanode_t *head, *tail;
-	long isize, nsize;
-	Chanode_t *ancur;
-	Chanode_t *sncur;
-	long scurr;
-} Chastore_t;
-
-typedef struct S_xrecord {
-	struct S_xrecord *next;
-	char const *ptr;
-	long size;
-	unsigned long ha;
-} Xrecord_t;
-
-typedef struct S_xdfile {
-	Chastore_t rcha;
-	long nrec;
-	unsigned int hbits;
-	Xrecord_t **rhash;
-	long dstart, dend;
-	Xrecord_t **recs;
-	char *rchg;
-	long *rindex;
-	long nreff;
-	unsigned long *ha;
-} Xdfile_t;
-
-typedef struct S_xdfenv {
-	Xdfile_t xdf1, xdf2;
-} xdfenv_t;
-
-typedef struct S_xdlclass {
-	struct S_xdlclass *next;
-	unsigned long ha;
-	char const *line;
-	long size;
-	long idx;
-	long len1, len2;
-} Xdlclass_t;
-
-typedef struct S_xdlclassifier {
-	unsigned int hbits;
-	long hsize;
-	Xdlclass_t **rchash;
-	Chastore_t ncha;
-	Xdlclass_t **rcrecs;
-	long alloc;
-	long count;
-	long flags;
-} Xdlclassifier_t;
-
-
-static int xdl_init_classifier(Xdlclassifier_t *cf, long size, long flags);
-static void xdl_free_classifier(Xdlclassifier_t *cf);
-static int xdl_classify_record(unsigned int pass, Xdlclassifier_t *cf, Xrecord_t **rhash, unsigned int hbits, Xrecord_t *rec);
-//static int xdl_prepare_ctx(unsigned int pass, Mmfile_t *mf, long narec, Xpparam_t const *xpp, Xdlclassifier_t *cf, Xdfile_t *xdf);
-static void xdl_free_ctx(Xdfile_t *xdf);
-static int xdl_clean_mmatch(char const *dis, long i, long s, long e);
-static int xdl_cleanup_records(Xdlclassifier_t *cf, Xdfile_t *xdf1, Xdfile_t *xdf2);
-static int xdl_trim_ends(Xdfile_t *xdf1, Xdfile_t *xdf2);
-static int xdl_optimize_ctxs(Xdlclassifier_t *cf, Xdfile_t *xdf1, Xdfile_t *xdf2);
-
-static int xdl_hashbits(unsigned int size);
-int xdl_cha_init(Chastore_t *x, unsigned long long y, long z);
-
-static int xdl_init_classifier(Xdlclassifier_t *cf, long size, long flags) {
-	cf->flags = flags;
-
-	cf->hbits = xdl_hashbits((unsigned int) size);
-	cf->hsize = 1 << cf->hbits;
-
-	if (xdl_cha_init(&cf->ncha, sizeof(Xdlclass_t), size / 4 + 1) < 0) {
-
-		return -1;
-	}
-	if (!(cf->rchash = (Xdlclass_t **) xdl_malloc(cf->hsize * sizeof(Xdlclass_t *)))) {
-
-		xdl_cha_free(&cf->ncha);
-		return -1;
-	}
-	memset(cf->rchash, 0, cf->hsize * sizeof(Xdlclass_t *));
-
-	cf->alloc = size;
-	if (!(cf->rcrecs = (Xdlclass_t **) xdl_malloc(cf->alloc * sizeof(Xdlclass_t *)))) {
-
-		xdl_free(cf->rchash);
-		xdl_cha_free(&cf->ncha);
-		return -1;
-	}
-
-	cf->count = 0;
-
-	return 0;
+int main()
+{
+//	char string[25], reverse_string[25] = {'\0'};
+	int a[8], b[4][8], (*c)[2];
+	int d[] = {0};
+	int e[];
+	
+	a[0] = 1;
 }
