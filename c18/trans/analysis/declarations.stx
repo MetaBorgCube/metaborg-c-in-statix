@@ -86,21 +86,38 @@ rules foldVoidParam : list(TYPE) -> list(TYPE)
   initClauseOptOk(s_for, InitClause2InitClause-OPT(init)) :-
 	initClauseOk(s_for, init).
 
-  initDeclrtrOk : scope * TYPE * InitDeclarator -> ID
+  initDeclrtrOk : scope * TYPE * InitDeclarator -> (ID * TYPE)
   // TODO When assigning, types do not have to match exactly. For example, assignments between int types are (mostly) allowed.
-  initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}
+  initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = (id, T) :- {T'}
     declrtrOk(s, decl) == id,
     typeOfExp(s, e) == T', // expression type
     lub(T, T') == T.
-  initDeclrtrOk(s, _, Declarator2InitDeclarator(decl)) = id :-
+  initDeclrtrOk(s, _, Declarator2InitDeclarator(decl)) = (id, _) :-
     declrtrOk(s, decl) == id.
-  initDeclrtrOk(s, STRUCT(s_struct), InitDecl(decl, Initializer(is))) = id :-
+  initDeclrtrOk(s, T@STRUCT(s_struct), InitDecl(decl, Initializer(is))) = (id, T) :-
     declrtrOk(s, decl) == id,
     initializersOk(s, s_struct, is, 0).
-  initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDecl(_)), Initializer(vals))) = id :-
-	initializerTypesOk(s, T, vals). // TODO check nested arrays and lengths
-  initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDeclLength(_, c)), Initializer(vals))) = id :-
-	initializerTypesOk(s, T, vals). // TODO check nested arrays and lengths
+  initDeclrtrOk(s, Te, InitDecl(Declarator(p, d@ArrayDecl(_)), Initializer(vals))) = (id, Ta) :-
+    dirDeclrtrOk(s, d) == id,
+	initializerTypesOk(s, Te, vals),
+	Ta == POINTER(Te). // TODO check nested arrays and lengths
+  initDeclrtrOk(s, Te, InitDecl(Declarator(p, d@ArrayDeclLength(_, c)), Initializer(vals))) = (id, Ta) :-
+    dirDeclrtrOk(s, d) == id,
+	initializerTypesOk(s, Te, vals),
+	Ta == POINTER(Te). // TODO check nested arrays and lengths
+	
+//	
+//  
+//  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDecl(_)), _)])) :- {id Tu T} // TODO does not accept list of declarators
+//  	declSpecsToType(s, declSpecs) == Tu,
+//  	typeOfPointer(p, Tu) == T,
+//  	initDeclrtrOk(s, T, i) == id,
+//  	declareVar(s, id, POINTER(T)).
+//  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDeclLength(_, _)), _)])) :- {id Tu T} // TODO does not accept list of declarators
+//	declSpecsToType(s, declSpecs) == Tu,
+//	typeOfPointer(p, Tu) == T,
+//	initDeclrtrOk(s, T, i) == id,
+//	declareVar(s, id, POINTER(T)).
 
 rules initializerTypesOk : scope * TYPE * list(Initializer)
 	initializerTypesOk(s, T, [i]) :- {e}
@@ -130,6 +147,13 @@ rules initializersOk : scope * scope * list(Initializer) * int
 
   declrtrOk : scope * Declarator -> ID
   declrtrOk(s, Declarator(_, dd)) = dirDeclrtrOk(s, dd).
+  
+  typeOfDirDeclrtr : TYPE * DirectDeclarator -> (ID * TYPE)
+  typeOfDirDeclrtr(T, IdDecl(id)) = (id, T).
+  typeOfDirDeclrtr(ARRAY(dims, Te), ArrayDecl(d)) = (id, T) :-
+    T == ARRAY([-1 | dims], Te).
+  typeOfDirDeclrtr(ARRAY(dims, Te), ArrayDeclLength(d, c)) = (id, T) :-
+    T == ARRAY([c | dims], Te).
 
   dirDeclrtrOk : scope * DirectDeclarator -> ID
 
@@ -170,16 +194,6 @@ rules initializersOk : scope * scope * list(Initializer) * int
   declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
     declSpecsToType(s, declSpecs) == T,
     declareTypedef(s, id, T).
-  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDecl(_)), _)])) :- {id Tu T}
-  	declSpecsToType(s, declSpecs) == Tu,
-  	typeOfPointer(p, Tu) == T,
-  	initDeclrtrOk(s, T, i) == id,
-  	declareVar(s, id, POINTER(T)).
-  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDeclLength(_, _)), _)])) :- {id Tu T}
-	declSpecsToType(s, declSpecs) == Tu,
-	typeOfPointer(p, Tu) == T,
-	initDeclrtrOk(s, T, i) == id,
-	declareVar(s, id, POINTER(T)).
   declOk(s, Decl(declSpecs, declrtrs)) :- {Tu}
     declSpecsToType(s, declSpecs) == Tu,
     multiDeclOk(s, Tu, declrtrs).
@@ -216,10 +230,10 @@ rules uniDeclOk : scope * TYPE * InitDeclarator
     
 rules declWithDeclrtr : scope * TYPE * InitDeclarator * Declarator
     
-  declWithDeclrtr(s, Tu, i, Declarator(p, _)) :- {T id}
+  declWithDeclrtr(s, Tu, i, Declarator(p, _)) :- {T Td id}
     typeOfPointer(p, Tu) == T,
-    initDeclrtrOk(s, T, i) == id,
-    declareVar(s, id, T).
+    initDeclrtrOk(s, T, i) == (id, Td),
+    declareVar(s, id, Td).
     
   typeOfPointer : Pointer-OPT * TYPE -> TYPE
   typeOfPointer(NoPointer(), T) = T.
@@ -279,7 +293,7 @@ rules defineStructOrUnion : scope * TypeID-OPT * TYPE
 
   defineStructOrUnion(_, NoTypeID(), _).
   defineStructOrUnion(s, TypeID2TypeID-OPT(id), T) :- {id'}
-    declareStructOrUnion(s, id, T).    
+    declareStructOrUnion(s, id, T).
     
 rules structDeclOk : scope * scope * StructDeclaration * int -> int
 

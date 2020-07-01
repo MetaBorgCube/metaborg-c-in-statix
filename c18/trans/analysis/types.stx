@@ -45,6 +45,10 @@ signature
   // ATOMIC
   
   POINTER : TYPE -> TYPE
+  
+  // base type * list of dimensions
+  // int[2][4] -> ARRAY(INT, [2, 4])
+  ARRAY : TYPE * list(int) -> TYPE
 
 rules // typing  rules
   typeOfType : scope * list(TypeSpecifier) -> TYPE
