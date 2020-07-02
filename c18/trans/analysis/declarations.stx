@@ -10,27 +10,27 @@ imports
 
 signature
   namespaces
-    Var      : ID
-    Member   : ID * int
-    StructOrUnion : ID
-    Enum     : ID
-    FunSig   : ID
-    Typedef  : ID
-    Label    : ID
-    Return   :
+    // actual C namespaces
+    VarFunType      : ID
+    StructUnionEnum : ID
+    Member          : ID * int
+    Label           : ID
+
+    // helper namespaces
+    FunSig          : ID
+    Return          :
+
+  name-resolution labels P F
+    resolve VarFunType      filter P*    min $ < P
+    resolve StructUnionEnum filter P*    min $ < P
+    resolve Member          filter P*    min $ < P
+    resolve Label           filter P* F* min $ < P, $ < F, F < P
+
+    resolve FunSig          filter P*    min $ < P
+    resolve Return          filter P*    min $ < P
 
   relations
     type : occurrence -> TYPE
-
-  name-resolution labels P F
-    resolve Var           filter P*    min $ < P
-    resolve Member        filter P*    min $ < P
-    resolve StructOrUnion filter P*    min $ < P
-    resolve Enum          filter P*    min $ < P
-    resolve FunSig        filter P*    min $ < P
-    resolve Typedef       filter P*    min $ < P
-    resolve Label         filter P* F* min $ < P, $ < F, F < P
-    resolve Return        filter P*    min $ < P
 
 
 rules
@@ -312,13 +312,13 @@ rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
   declareVars maps declareVar(*, list(*), list(*))
   declareVar(s, id, T) :-
-    s -> Var{id} with type T,
-    type of Var{id} in s |-> [(_, (Var{id}, _))] | error $[Variable [id] already defined].
+    s -> VarFunType{id} with type T,
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id}, _))] | error $[Variable [id] already defined].
 
   typeOfVar : scope * ID -> TYPE
   typeOfVar(s, id) = T :- {id'}
     @id.ref := id', // was causing errors, explicated terms don't support annotations?
-    type of Var{id} in s |-> [(_, (Var{id'}, T)) | _] | error $[Variable [id] not defined].
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id'}, T)) | _] | error $[Variable [id] not defined].
 
  /**
   * Definitie:
@@ -360,13 +360,13 @@ rules // declaring / resolving variables and functions
 
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-
-    s -> Typedef{id} with type T,
-    type of Typedef{id} in s |-> [(_, (Typedef{id}, _))] | error $[Type [id] already defined].
+    s -> VarFunType{id} with type T,
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id}, _))] | error $[Type [id] already defined].
 
   typeOfTypedef : scope * ID -> TYPE
   typeOfTypedef(s, id) = T :- {id'}
     @id.ref := id',
-    type of Typedef{id} in s |-> [(_, (Typedef{id'}, T)) | _] | error $[Type [id] not defined].
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id'}, T)) | _] | error $[Type [id] not defined].
 
   declareLabel : scope * ID
   declareLabel(s, id) :-
@@ -377,21 +377,21 @@ rules // declaring / resolving variables and functions
   resolveLabel(s, id) :- {id'}
     @id.ref := id',
     Label{id} in s |-> [(_, (Label{id'})) | _] | error  $[use of undeclared label [id]].
-    
+
 rules declareStructOrUnion : scope * ID * TYPE
 
   declareStructOrUnion(s, id, T) :-
-    s -> StructOrUnion{id} with type T,
-    type of StructOrUnion{id} in s |-> [(_, (StructOrUnion{id}, _))] 
+    s -> StructUnionEnum{id} with type T,
+    type of StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id}, _))]
         | error $[Struct or union [id] already defined].
-        
+
 rules typeOfStructOrUnion : scope * ID -> TYPE
 
   typeOfStructOrUnion(s, id) = T :- {id'}
-//    @id.ref := id',
-    type of StructOrUnion{id} in s |-> [(_, (StructOrUnion{id'}, T))] 
-        | error $[Struct or union [id] not defined]. 
-        
+    @id.ref := id',
+    type of StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id'}, T))]
+        | error $[Struct or union [id] not defined].
+
 rules declareMember : scope * ID * int * TYPE
 
   declareMember(s, id, pos, T) :-
@@ -415,12 +415,11 @@ rules typeOfMemberAt : scope * int -> TYPE
 rules declareEnum : scope * ID
 
   declareEnum(s, id) :-
-    s -> Enum{id},
-    Enum{id} in s |-> [(_, (Enum{id}))] | error $[Enum [id] already defined].
+    s -> StructUnionEnum{id},
+    StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id}))] | error $[Enum [id] already defined].
 
 
 rules enumDeclared : scope * ID
 
   enumDeclared(s, id) :-
-    Enum{id} in s |-> [(_, (Enum{id})) | _] | error $[Enum [id] not defined].
-    
+    StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id})) | _] | error $[Enum [id] not defined].
