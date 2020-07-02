@@ -46,14 +46,13 @@ rules
   stmtOk(s, DoWhile(body, e)) :-
     typeOfExp(s, e) == _,
     stmtOk(s, body).
-  stmtOk(s, For(init_opt, e1_opt, e2_opt, body)) :- {s_for T}
+  stmtOk(s, For(init_opt, e1_opt, e2_opt, body)) :- {s_for}
     new s_for,
     s_for -P-> s,
     s -F-> s_for,
     initClauseOptOk(s_for, init_opt),
-    typeOfExpOpt(s_for, e1_opt) == T,
-    scalarType(T), // TODO condition should be intType?
-    typeOfExpOpt(s_for, e2_opt) == _, // TODO type does not matter?
+    scalarType(typeOfExpOpt(s_for, e1_opt)),
+    typeOfExpOpt(s_for, e2_opt) == _,
     stmtOk(s_for, body).
 
   stmtOk(s, Goto(id)) :-
