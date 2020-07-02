@@ -27,7 +27,7 @@ struct Person
 } person1, person2, p[20];
 ]] analysis succeeds
 
-test designated initializer [[
+test simple initializer [[
 struct Person
 {
     char name[50];
@@ -37,7 +37,8 @@ struct Person
 
 struct Person p = {
 	"John",
-	8
+	8,
+	2000.f
 };
 ]] analysis succeeds
 

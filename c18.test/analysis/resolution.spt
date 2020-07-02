@@ -9,3 +9,41 @@ int main() {
   return 0;
 }
 ]] resolve #2 to #1
+
+test function params shadow globals 1 [[
+extern void printf(char *s, ...);
+
+int a = 1;
+
+void test(int [[a]]) {
+    printf("%d\n", [[a]]);
+}
+
+int main(int argc, char **argv) {
+    test(8);
+    return 0;
+}
+]] analysis succeeds
+
+test function params shadow globals 2 [[
+extern void printf(char *s, ...);
+
+int a = 1;
+
+void test(int [[a]]) {
+    printf("%d\n", [[a]]);
+}
+
+int main(int argc, char **argv) {
+    test(8);
+    return 0;
+}
+]] resolve #2 to #1
+
+test double definition [[
+int main(int argc, char **argv) {
+    int a;
+    char a;
+    return 0;
+}
+]] analysis fails
