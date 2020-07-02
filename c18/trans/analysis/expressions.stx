@@ -151,12 +151,13 @@ rules typeOfAddSub : TYPE * TYPE -> TYPE
 
 rules
   typeOfUnExp : UnaryOp * TYPE -> TYPE
-//  typeOfUnExp(UnaryOp(), T). TODO
+
   typeOfUnExp(Sizeof(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Alignof(), _) = ULONGLONG. // actually size_t
   typeOfUnExp(Deref(), POINTER(T)) = T.
   typeOfUnExp(Addr(), T) = POINTER(T).
-  typeOfUnExp(Not(), _) = INT().
+  typeOfUnExp(Not(), T) = INT() :-
+    intType(T).
     
 
 rules
