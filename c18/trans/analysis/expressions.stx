@@ -92,14 +92,14 @@ rules
   typeOfExp(s, Call(Var(id), args)) = Tr :- {Tf Ta Ta'}
     typeOfFun(s, id) == Tf,
     typeOfExps(s, args) == Ta',
-    funArgsOk(s, Tf, Ta'),
-    Tr == typeOfFunCall(s, Tf).
+    funArgsOk(Tf, Ta'),
+    Tr == typeOfFunCall(Tf).
 
   typeOfExp(s, Call(callee, args)) = Tr :- {Tf Ta Ta'}
     typeOfExp(s, callee) == Tf, // i.e. int -> int
     typeOfExps(s, args) == Ta',
-    funArgsOk(s, Tf, Ta'),
-    Tr == typeOfFunCall(s, Tf).   
+    funArgsOk(Tf, Ta'),
+    Tr == typeOfFunCall(Tf).
     
   typeOfExp(s, Proj(e, var)) = T :- {TS}
      typeOfExp(s, e) == TS,
@@ -109,25 +109,25 @@ rules
 
 rules
   typeOfExpOpt : scope * Exp-OPT -> TYPE
-  typeOfExpOpt(s, NoExp()) = T.
+  typeOfExpOpt(_, NoExp()) = _.
   typeOfExpOpt(s, Exp2Exp-OPT(e)) = typeOfExp(s, e).
   
   
-rules funArgsOk : scope * TYPE * list(TYPE)
+rules funArgsOk : TYPE * list(TYPE)
 
-  funArgsOk(s, FUN(Tas, _), Tps) :-
+  funArgsOk(FUN(Tas, _), Tps) :-
     lubs(Tas, Tps) == Tas | error $[Function expects types [Tas], not [Tps]].
     
-  funArgsOk(s, VARFUN([], _), _).
-  funArgsOk(s, VARFUN([Ta | Tas], Tr), [Tp | Tps]) :-
+  funArgsOk(VARFUN([], _), _).
+  funArgsOk(VARFUN([Ta | Tas], Tr), [Tp | Tps]) :-
     lub(Ta, Tp) == Ta,
-    funArgsOk(s, VARFUN(Tas, Tr), Tps).
+    funArgsOk(VARFUN(Tas, Tr), Tps).
   
   
-rules typeOfFunCall : scope * TYPE -> TYPE
+rules typeOfFunCall : TYPE -> TYPE
 
-  typeOfFunCall(_, FUN(_, T)) = T.
-  typeOfFunCall(_, VARFUN(_, T)) = T.
+  typeOfFunCall(FUN(_, T)) = T.
+  typeOfFunCall(VARFUN(_, T)) = T.
 
 
 rules typeOfSouMem : scope * TYPE * ID -> TYPE
