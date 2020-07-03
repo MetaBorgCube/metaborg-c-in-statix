@@ -35,7 +35,7 @@ rules
     scalarType(T),
     stmtOk(s, then),
     stmtOk(s, else).
-  stmtOk(s, Switch(e, case)) :- {T} // TODO switch should not accept _Bool, which is an int type now.
+  stmtOk(s, Switch(e, case)) :- {T}
     typeOfExp(s, e) == T,
     intType(T) | error $[statement requires expression of integer type ('[T]' invalid)] @e, // switch should have int type
     switchCaseOk(s, T, Statement2BlockItem(case)).

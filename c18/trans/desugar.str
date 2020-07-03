@@ -20,9 +20,7 @@ strategies
 rules
 
   desugar-all = topdown(try(desugar)); 
-    sort-decl-spec-all 
-//    desugar-pointers-all; 
-//    collapse-decls-all
+    sort-decl-spec-all
   
   desugar: Subscript(a, b) -> UnOp(Deref(), AddSub(a, Add(), b))
   desugar: DerefProj(e, i) -> Proj(UnOp(Deref(), e), i)
