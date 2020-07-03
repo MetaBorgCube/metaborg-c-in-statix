@@ -13,20 +13,20 @@ signature
     // actual C namespaces
     VarFunType      : ID
     StructUnionEnum : ID
-    Member          : ID * int
+    StructMember          : ID * int
     Label           : ID
 
     // helper namespaces
-    FunSig          : ID
+    FunProto          : ID
     Return          :
 
   name-resolution labels P F
     resolve VarFunType      filter P*    min $ < P
     resolve StructUnionEnum filter P*    min $ < P
-    resolve Member          filter P*    min $ < P
+    resolve StructMember          filter P*    min $ < P
     resolve Label           filter P* F* min $ < P, $ < F, F < P
 
-    resolve FunSig          filter P*    min $ < P
+    resolve FunProto          filter P*    min $ < P
     resolve Return          filter P*    min $ < P
 
   relations
@@ -114,10 +114,10 @@ rules initializerTypesOk : scope * TYPE * list(Initializer)
 rules initializerOk : scope * scope * Initializer * int
 
   initializerOk(s, s_struct, AssignExp2Initializer(Exp2AssignExp(e)), pos) :-
-    typeOfMemberAt(s_struct, pos) == typeOfExp(s, e).
+    typeOfStructMemberAt(s_struct, pos) == typeOfExp(s, e).
     
   initializerOk(s, s_struct, Initializer(is), pos) :- {s_substruct}
-    typeOfMemberAt(s_struct, pos) == STRUCT(s_substruct),
+    typeOfStructMemberAt(s_struct, pos) == STRUCT(s_substruct),
     initializersOk(s, s_substruct, is, 0).
 
 
@@ -160,13 +160,13 @@ rules initializersOk : scope * scope * list(Initializer) * int
     typeOfPointer(p, retTu) == retT,
     paramsOk(s, params) == (_, paramTVs),
     foldVoidParam(paramTVs) == paramTs,
-    declareFunSig(s, id, FUN(paramTs, retT)).
+    declareFunProto(s, id, FUN(paramTs, retT)).
   declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamListVarArgs(params))))])) :- {retTu retT paramTs paramTVs s_fun qRes}
     declSpecsToType(s, declSpecs) == retTu,
     typeOfPointer(p, retTu) == retT,
     paramsOk(s, params) == (_, paramTVs),
     foldVoidParam(paramTVs) == paramTs,
-    declareFunSig(s, id, VARFUN(paramTs, retT)).
+    declareFunProto(s, id, VARFUN(paramTs, retT)).
   declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
     declSpecsToType(s, declSpecs) == T,
     declareTypedef(s, id, T).
@@ -299,7 +299,7 @@ rules structUniDeclOk : scope * scope * TYPE * StructDeclarator * int
   structUniDeclOk(s, s_struct, t, Declarator2StructDeclarator(d@Declarator(p, _)), pos) :- {id T}
     typeOfPointer(p, t) == T,
     declrtrOk(s_struct, d) == id,
-    declareMember(s_struct, id, pos, T).
+    declareStructMember(s_struct, id, pos, T).
     
 rules structMultiDeclOk : scope * scope * TYPE * list(StructDeclarator) * int -> int
 
@@ -328,7 +328,7 @@ rules // declaring / resolving variables and functions
   */
   defineFun : scope * ID * TYPE
   defineFun(s, id, t) :-
-    declareFunSig(s, id, t), // guarantee there's always a signature
+    declareFunProto(s, id, t), // guarantee there's always a signature
     declareVar(s, id, t).
 
   /**
@@ -337,26 +337,26 @@ rules // declaring / resolving variables and functions
    *   er mogen meerdere declaraties van een naam zijn in scope graphs
    * - check dat andere declaraties met dezelfde naam hetzelfde type hebben
    */
-  declareFunSig : scope * ID * TYPE
-  declareFunSig(s, id, t) :- {Ts results}
-    s -> FunSig{id} with type t,
-    type of FunSig{id} in s |-> results,
-    Ts == queryResultsToTypes(results),
-    equiTypes(t, Ts).
+  declareFunProto : scope * ID * TYPE
+  declareFunProto(s, id, T) :- {Ts results}
+    s -> FunProto{id} with type T,
+    type of FunProto{id} in s |-> results,
+    Ts == typesOfQueryResults(results),
+    equiTypes(T, Ts).
 
   equiType : TYPE * TYPE
   equiTypes maps equiType(*, list(*))
   equiType(Ta, Tb) :-
     Ta == Tb.
 
-  queryResultToType : (path * (occurrence * TYPE)) -> TYPE
-  queryResultsToTypes maps queryResultToType(list(*)) = list(*)
-  queryResultToType((_, (_, T))) = T.
+  typeOfQueryResult : (path * (occurrence * TYPE)) -> TYPE
+  typesOfQueryResults maps typeOfQueryResult(list(*)) = list(*)
+  typeOfQueryResult((_, (_, T))) = T.
 
   typeOfFun : scope * ID -> TYPE
   typeOfFun(s, id) = T :- {id'}
     @id.ref := id',
-    type of FunSig{id} in s |-> [(_, (FunSig{id'}, T)) | _].
+    type of FunProto{id} in s |-> [(_, (FunProto{id'}, T)) | _].
 
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-
@@ -392,23 +392,23 @@ rules typeOfStructOrUnion : scope * ID -> TYPE
     type of StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id'}, T))]
         | error $[Struct or union [id] not defined].
 
-rules declareMember : scope * ID * int * TYPE
+rules declareStructMember : scope * ID * int * TYPE
 
-  declareMember(s, id, pos, T) :-
-    s -> Member{id pos} with type T,
-    type of Member{id pos} in s |-> [(_, (Member{id pos}, _))] | error $[Member [id] already defined].
+  declareStructMember(s, id, pos, T) :-
+    s -> StructMember{id pos} with type T,
+    type of StructMember{id pos} in s |-> [(_, (StructMember{id pos}, _))] | error $[StructMember [id] already defined].
 
-rules typeOfMember : scope * ID -> TYPE
+rules typeOfStructMember : scope * ID -> TYPE
 
- typeOfMember(s, id) = T :-
-    type of Member{id _} in s |-> [(_, (Member{id _}, T)) | _] | error $[Member [id] not defined].
+ typeOfStructMember(s, id) = T :-
+    type of StructMember{id _} in s |-> [(_, (StructMember{id _}, T)) | _] | error $[StructMember [id] not defined].
     
-rules typeOfMemberAt : scope * int -> TYPE
+rules typeOfStructMemberAt : scope * int -> TYPE
 
-  typeOfMemberAt(s, pos) = T :- {id' T'}
-    type of Member{_ pos} in s |-> [(_, (Member{id' pos}, T')) | _] 
-        | error $[Member at position [pos] not defined],
-    type of Member{_ pos} in s |-> [(_, (Member{_ pos}, T)) | _]
+  typeOfStructMemberAt(s, pos) = T :- {id' T'}
+    type of StructMember{_ pos} in s |-> [(_, (StructMember{id' pos}, T')) | _]
+        | error $[StructMember at position [pos] not defined],
+    type of StructMember{_ pos} in s |-> [(_, (StructMember{_ pos}, T)) | _]
         | error $[Initializer of type [T] is not convertible to member [id'] of type [T']].
       
 
