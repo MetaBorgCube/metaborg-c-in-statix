@@ -41,6 +41,12 @@ rules
 
   desugar: InitializerComma(is) -> Initializer(is)
 
+  desugar: ArrayDecl1(dd, _) -> ArrayDecl(dd)
+  desugar: ArrayDecl2(dd, _) -> ArrayDecl(dd)
+  desugar: ArrayDeclLength1(dd, _, e) -> ArrayDeclLength(dd, e)
+  desugar: ArrayDeclLength2(dd, _, e) -> ArrayDeclLength(dd, e)
+  desugar: ArrayDeclLength3(dd, _, e) -> ArrayDeclLength(dd, e)
+
 rules
 
   desugar-pointers-all = bottomup(try(desugar-pointers))

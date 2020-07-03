@@ -147,11 +147,17 @@ context-free syntax
     <Pointer-OPT> <DirectDeclarator>
   > 
   
-  DirectDeclarator.IdDecl = ID 
-  DirectDeclarator.DeclBracket = <(<Declarator>)> 
-  DirectDeclarator.ArrayDecl = <<DirectDeclarator> []>
-  DirectDeclarator.ArrayDeclLength = <<DirectDeclarator> [<ConstExp>]>
+  DirectDeclarator.IdDecl = ID
+  DirectDeclarator.DeclBracket = <(<Declarator>)>
+  DirectDeclarator.ArrayDecl = <<DirectDeclarator> [ ]>
+  DirectDeclarator.ArrayDecl1 = <<DirectDeclarator> [<TypeQualifier+>]>
+  DirectDeclarator.ArrayDecl2 = <<DirectDeclarator> [<TypeQualifier*> *]>
+  DirectDeclarator.ArrayDeclLength = <<DirectDeclarator> [<AssignExp>]>
+  DirectDeclarator.ArrayDeclLength1 = <<DirectDeclarator> [<TypeQualifier+> <AssignExp>]>
+  DirectDeclarator.ArrayDeclLength2 = <<DirectDeclarator> [static <TypeQualifier*> <AssignExp>]>
+  DirectDeclarator.ArrayDeclLength3 = <<DirectDeclarator> [<TypeQualifier+> static <AssignExp>]>
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
+  DirectDeclarator.IdListDecl = <(<ID*>)>
   
   ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}*>>
   ParameterTypeList.ParamListVarArgs = <<{ParameterDeclaration ", "}+> , ...> 
