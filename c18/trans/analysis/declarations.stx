@@ -54,7 +54,7 @@ rules
     new s_fun,
     s_fun -P-> s,
     s_fun -> Return{} with type retT,
-    paramsOk(s, params) == (paramIDs, paramTs),
+    paramsOk(s_fun, params) == (paramIDs, paramTs),
     declsOk(s_fun, decls),
     compStmtOk(s_fun, compStmt),
     defineFun(s, id, FUN(paramTs, retT)),
