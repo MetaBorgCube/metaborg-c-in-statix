@@ -256,21 +256,9 @@ rules lub : TYPE * TYPE -> TYPE
   lubs maps lub(list(*), list(*)) = list(*)
 
   lub(T, T) = T.
-  lub(Ta, Tb) = T :- 
-    ilub(Ta, Tb) == T.
-  
-
-rules project : Bool * TYPE * TYPE -> TYPE
-
-  project(True(), T, _) = T.
-  project(False(), _, T) = T.  
-
-rules ilub : TYPE * TYPE -> TYPE
-
-  ilub(POINTER(Ta), POINTER(VOID())) = POINTER(Ta).
-  ilub(POINTER(VOID()), POINTER(Ta)) = POINTER(Ta).
-
-  ilub(Ta, Tb) = T :- {Ra Rb Rm}
+  lub(POINTER(Ta), POINTER(VOID())) = POINTER(Ta).
+  lub(POINTER(VOID()), POINTER(Ta)) = POINTER(Ta).
+  lub(Ta, Tb) = T :- {Ra Rb Rm}
     intConvRank(Ta) == Ra,
     intConvRank(Tb) == Rb,
     #(max(Ra, Rb)) == Rm,
