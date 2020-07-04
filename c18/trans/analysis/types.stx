@@ -156,25 +156,40 @@ rules // type helpers
 	
 rules intType : TYPE
 
-  intType(BOOL()).
+  intType(ENUM()).
+  // standard signed integer types
   intType(SCHAR()).
-  intType(CHAR()).
   intType(SHORT()).
   intType(INT()).
   intType(LONG()).
   intType(LONGLONG()).
-  intType(ENUM()).
+  // standard unsigned integer types
+  intType(CHAR()).
+  intType(BOOL()).
   intType(T) :- {ST}
     signEquiv(ST, T).
 
-rules numberType : TYPE
-  numberType(FLOAT()).
-  numberType(DOUBLE()).
-  numberType(LONGDOUBLE()).
-  numberType(COMPLEX(_)).
-  numberType(IMAGINARY(_)).
-  numberType(T) :-
+rules floatingType : TYPE
+  floatingType(FLOAT()).
+  floatingType(DOUBLE()).
+  floatingType(LONGDOUBLE()).
+  floatingType(COMPLEX(T)) :- complexSubtype(_) == T.
+
+rules arithmeticType : TYPE
+  arithmeticType(FLOAT()).
+  arithmeticType(DOUBLE()).
+  arithmeticType(LONGDOUBLE()).
+  arithmeticType(COMPLEX(T)) :-
+    complexSubtype(_) == T.
+  arithmeticType(IMAGINARY(T)) :-
+    complexSubtype(_) == T.
+  arithmeticType(T) :-
     intType(T).
+
+rules scalarType : TYPE
+
+  scalarType(POINTER(_)).
+  scalarType(T) :- arithmeticType(T).
 	
 rules signEquiv : TYPE * TYPE
 
@@ -270,9 +285,3 @@ rules convertIntType : TYPE -> TYPE
   
   convertIntType(Ti) = To :-
     Ti == To | error $[[Ti] is not implicitly convertible to [To]].
-    
-    
-rules scalarType : TYPE
-  
-  scalarType(POINTER(_)).
-  scalarType(T) :- intType(T).

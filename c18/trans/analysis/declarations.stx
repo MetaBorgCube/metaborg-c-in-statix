@@ -99,10 +99,11 @@ rules foldVoidParam : list(TYPE) -> list(TYPE)
     initializersOk(s, s_struct, is, 0).
   initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDecl(_)), Initializer(vals))) = id :-
 	initializerTypesOk(s, T, vals). // TODO check nested arrays and lengths
-  initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDeclLength(_, l)), Initializer(vals))) = id :- {e}
+  initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDeclLength(_, l)), Initializer(vals))) = id :- {Te e}
 	initializerTypesOk(s, T, vals),
 	Exp2AssignExp(e) == l,
-	intType(typeOfExp(s, e)). // TODO check nested arrays and lengths
+	typeOfExp(s, e) == Te,
+	intType(Te). // TODO check nested arrays and lengths
 
 rules initializerTypesOk : scope * TYPE * list(Initializer)
 	initializerTypesOk(s, T, [i]) :- {e}

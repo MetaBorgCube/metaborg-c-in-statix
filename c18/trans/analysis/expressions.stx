@@ -24,12 +24,12 @@ rules
   typeOfExp(s, Assign(e1, AssignAdd(), e2)) = T :- {T2}
     typeOfExp(s, e1) == T,
     typeOfExp(s, e2) == T2,
-    typeOfAddSub(T, T2) == T.
+    typeOfAdd(T, T2) == T.
     
   typeOfExp(s, Assign(e1, AssignMin(), e2)) = T :- {T2}
     typeOfExp(s, e1) == T,
     typeOfExp(s, e2) == T2,
-    typeOfAddSub(T, T2) == T.
+    typeOfSub(T, T2) == T.
   
   typeOfExp(s, Assign(e1, op, e2)) = T :- {T2}
     typeOfExp(s, e1) == T,
@@ -43,40 +43,51 @@ rules
   typeOfExp(s, Ior(e1, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
-    numberRules(T1, T2) == T.
+    intRules(T1, T2) == T.
     
   typeOfExp(s, Eor(e1, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
-    numberRules(T1, T2) == T.
+    intRules(T1, T2) == T.
     
   typeOfExp(s, And(e1, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
-    numberRules(T1, T2) == T.
+    intRules(T1, T2) == T.
     
   typeOfExp(s, EqNeq(e1, op, e2)) = INT() :-
     scalarType(typeOfExp(s, e1)),
     scalarType(typeOfExp(s, e2)).
     
-  typeOfExp(s, Order(e1, op, e2)) = INT() :-
-    intType(typeOfExp(s, e1)),
-    intType(typeOfExp(s, e2)).
-    
-  typeOfExp(s, Shift(e1, op, e2)) = T :- {T1 T2}
-    typeOfExp(s, e1) == T1,
-    numberRules(T1, INT()) == T,
-    intType(typeOfExp(s, e2)).
-    
-  typeOfExp(s, AddSub(e1, op, e2)) = T :- {T1 T2}
+  typeOfExp(s, Order(e1, _, e2)) = INT :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
-    typeOfAddSub(T1, T2) == T.
+    typeOfOrder(T1, T2) == _.
     
-  typeOfExp(s, MulDivMod(e1, op, e2)) = T :- {T1 T2}
+  typeOfExp(s, Shift(e1, _, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    intRules(T1, INT()) == T,
+    intType(typeOfExp(s, e2)).
+    
+  typeOfExp(s, Add(e1, e2)) = T :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
-    numberRules(T1, T2) == T.
+    typeOfAdd(T1, T2) == T.
+
+  typeOfExp(s, Sub(e1, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    typeOfSub(T1, T2) == T.
+
+  typeOfExp(s, MulDiv(e1, _, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    intRules(T1, T2) == T.
+    
+  typeOfExp(s, Mod(e1, e2)) = T :- {T1 T2}
+    typeOfExp(s, e1) == T1,
+    typeOfExp(s, e2) == T2,
+    arithmeticRules(T1, T2) == T.
     
   typeOfExp(s, SizeofT(_)) = ULONGLONG().
   typeOfExp(s, AlignofT(_)) = ULONGLONG().
@@ -143,11 +154,23 @@ rules typeOfSouMem : scope * TYPE * ID -> TYPE
       typeOfSouMem(s, typeOfStructOrUnion(s, u_id), var).
 
 
-rules typeOfAddSub : TYPE * TYPE -> TYPE
+rules typeOfAdd : TYPE * TYPE -> TYPE
   
-  typeOfAddSub(POINTER(T1), T2) = POINTER(T1) :- intType(T2).
-  typeOfAddSub(T1, POINTER(T2)) = POINTER(T2) :- intType(T1).
-  typeOfAddSub(T1, T2) = numberRules(T1, T2).
+  typeOfAdd(T1, T2) = arithmeticRules(T1, T2).
+  typeOfAdd(POINTER(T1), T2) = POINTER(T1) :- intType(T2).
+  typeOfAdd(T1, POINTER(T2)) = POINTER(T2) :- intType(T1).
+
+rules typeOfSub : TYPE * TYPE -> TYPE
+
+  typeOfSub(T1, T2) = arithmeticRules(T1, T2).
+  typeOfSub(POINTER(T1), POINTER(T2)) = T1 :-
+    T1 == T2.
+  typeOfSub(POINTER(T1), T2) = POINTER(T1) :- intType(T2).
+
+rules typeOfOrder : TYPE * TYPE -> TYPE
+  typeOfOrder(T1, T2) = arithmeticRules(T1, T2).
+  typeOfOrder(POINTER(T1), POINTER(T2)) = INT() :-
+    T1 == T2.
 
 rules
   typeOfUnExp : UnaryOp * TYPE -> TYPE
@@ -167,7 +190,7 @@ rules
     intType(T).
 
 rules
-  numberRules : TYPE * TYPE -> TYPE
-  numberRules(T1, T2) = intRules(T1, T2).
-  numberRules(T, T) = T :-
-    numberType(T).
+  arithmeticRules : TYPE * TYPE -> TYPE
+  arithmeticRules(T1, T2) = intRules(T1, T2).
+  arithmeticRules(T, T) = T :-
+    arithmeticType(T).

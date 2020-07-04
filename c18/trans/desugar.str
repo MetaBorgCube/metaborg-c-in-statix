@@ -22,7 +22,7 @@ rules
   desugar-all = topdown(try(desugar)); 
     sort-decl-spec-all
   
-  desugar: Subscript(a, b) -> UnOp(Deref(), AddSub(a, Add(), b))
+  desugar: Subscript(a, b) -> UnOp(Deref(), Add(a, b))
   desugar: DerefProj(e, i) -> Proj(UnOp(Deref(), e), i)
   
   desugar: While(c, s) -> For(NoInitClause(), c, NoExp(), s)
@@ -32,8 +32,8 @@ rules
   desugar: PreInc(e) -> Assign(e, AssignAdd(), DecInt("1"))
   desugar: PreDec(e) -> Assign(e, AssignMin(), DecInt("1"))
   
-  desugar: PostInc(e) -> AddSub(PreInc(e), Sub(), DecInt("1"))
-  desugar: PostDec(e) -> AddSub(PreDec(e), Add(), DecInt("1"))
+  desugar: PostInc(e) -> Sub(PreInc(e), DecInt("1"))
+  desugar: PostDec(e) -> Add(PreDec(e), DecInt("1"))
   
   desugar: LOr(a, b) -> UnOp(Not(), LAnd(UnOp(Not(), a), UnOp(Not(), b)))
 
