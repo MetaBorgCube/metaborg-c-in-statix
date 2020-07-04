@@ -143,12 +143,12 @@ rules typeOfFunCall : TYPE -> TYPE
 
 rules typeOfSouMem : scope * TYPE * ID -> TYPE
 
-  typeOfSouMem(_, STRUCT(s_struct), var) = typeOfMember(s_struct, var).
+  typeOfSouMem(_, STRUCT(s_struct), var) = typeOfStructMember(s_struct, var).
 
   typeOfSouMem(s, STRUCT_REF(s_id), var) =
       typeOfSouMem(s, typeOfStructOrUnion(s, s_id), var).
 
-  typeOfSouMem(_, UNION(s_union), var) = typeOfMember(s_union, var).
+  typeOfSouMem(_, UNION(s_union), var) = typeOfStructMember(s_union, var).
 
   typeOfSouMem(s, UNION_REF(u_id), var) =
       typeOfSouMem(s, typeOfStructOrUnion(s, u_id), var).
