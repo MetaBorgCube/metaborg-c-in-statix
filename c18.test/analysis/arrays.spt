@@ -65,3 +65,32 @@ int x[][] = {
 };
 ]] analysis fails
 
+test array dimentionality (1) [[
+int a[8];
+a[0] = 0;
+]] analysis succeeds
+
+test array dimentionality (2) [[
+int a[8][8];
+a[0][0] = 0;
+]] analysis succeeds
+
+test array dimentionality (3) [[
+int a[8][8][8];
+a[0][0][0] = 0;
+]] analysis succeeds
+
+test array of pointers (1) [[
+int *a[8];
+a[0][0] = 0;
+]] analysis succeeds
+
+test array of pointers (2) [[
+int *a[8][8];
+a[0][0][0] = 0;
+]] analysis succeeds
+
+test array of pointers to pointers (1) [[
+int **a[8];
+a[0][0][0] = 0;
+]] analysis succeeds
