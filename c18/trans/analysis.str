@@ -5,17 +5,24 @@ imports
   statixruntime
   statix/api
 
+  injections/-
+
   pp
+  
+  desugar
 
 rules // Analysis
 
   // see README.md for details on how to switch to multi-file analysis
 
   // single-file analysis
-  editor-analyze = stx-editor-analyze(id|"statics", "programOk")
+  editor-analyze = stx-editor-analyze(pre-analyze, post-analyze|"statics", "programOk")
   
   // multi-file analysis
 //  editor-analyze = stx-editor-analyze(id|"statics", "projectOk", "fileOk")
+
+  pre-analyze = desugar-all; explicate-injections-c18
+  post-analyze = strip-annos; implicate-injections-c18
 
 rules // Editor Services
 
@@ -34,3 +41,15 @@ rules // Debugging
   debug-show-analyzed: (selected, _, _, path, project-path) -> (filename, result)
     with filename := <guarantee-extension(|"analyzed.aterm")> path
        ; result   := selected
+
+  explicate-injections-aterm:
+    (node, _, _, path, project-path) -> (filename, result)
+    with
+      filename := <guarantee-extension(|"inj.aterm")> path
+    ; result   := <explicate-injections-c18> node
+
+  explicate-injections-desugared-aterm:
+    (node, _, _, path, project-path) -> (filename, result)
+    with
+      filename := <guarantee-extension(|"inj.desugared.aterm")> path
+    ; result   := <explicate-injections-c18> <desugar-all> node

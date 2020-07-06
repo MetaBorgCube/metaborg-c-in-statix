@@ -1,4 +1,4 @@
-module test
+module parse
 
 language c18
 
@@ -92,10 +92,10 @@ int main(int argc, char **argv) {
     printf("%s\n", argv[i]);
   }
 }
-]]
+]] parse succeeds
 
 test parse char literal [[
 int cap_ord(char ch) {
   return ch - 'A';
 }
-]]
+]] parse succeeds

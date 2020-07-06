@@ -1,0 +1,6 @@
+int main() {
+	for (;;) {
+		b++;
+	}
+	return 0;
+}

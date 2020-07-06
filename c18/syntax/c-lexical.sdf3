@@ -1,5 +1,6 @@
 module c-lexical
 
+sorts Constant
 context-free syntax
 
   Constant = IntegerConstant 
@@ -9,6 +10,12 @@ context-free syntax
 //  
 //  EnumerationConstant.Enum = ID
 
+sorts TypeID-OPT
+context-free syntax
+  TypeID-OPT          = TypeID
+  TypeID-OPT.NoTypeID = <>
+
+lexical sorts ID TypeID
 lexical syntax // identifiers
   ID   	 = [a-z] [a-zA-Z0-9\_]*
   TypeID = [A-Z] [a-zA-Z0-9\_]*
@@ -19,19 +26,21 @@ template options
   ID = keyword {reject}
   TypeID = keyword {reject}
 
- 
+
 sorts IntegerConstant
 context-free syntax // integer constants
   IntegerConstant.DecInt = DecInt 
   IntegerConstant.OctInt = OctInt 
   IntegerConstant.HexInt = HexInt 
+
+lexical sorts DecInt OctInt HexInt
 lexical syntax
-  DecInt = [0] LongUnsiged?
-  DecInt = [1-9][0-9]* LongUnsiged?
-  OctInt = [0][0-7]+ LongUnsiged?
-  HexInt = [0][xX][0-9a-fA-F]+ LongUnsiged?
-  LongUnsiged = [uU] [lL]?
-  LongUnsiged = [lL] [uU]? 
+  DecInt = [0] LongUnsigned?
+  DecInt = [1-9][0-9]* LongUnsigned?
+  OctInt = [0][0-7]+ LongUnsigned?
+  HexInt = [0][xX][0-9a-fA-F]+ LongUnsigned?
+  LongUnsigned = [uU] [lL]?
+  LongUnsigned = [lL] [uU]? 
 lexical restrictions
   DecInt -/- [0-9uUlL]
   OctInt -/- [0-7uUlL]
@@ -40,6 +49,8 @@ lexical restrictions
 sorts FloatingConstant
 context-free syntax
   FloatingConstant.Float = FLOAT
+
+lexical sorts FLOAT
 lexical syntax
   FLOAT =        "." [0-9]+ ([eE] [\-]? [0-9]+)? [fFlL]?
   FLOAT = [0-9]+ "." [0-9]+ ([eE] [\-]? [0-9]+)? [fFlL]?
@@ -49,14 +60,17 @@ lexical restrictions
 sorts CharacterConstant
 context-free syntax
   CharacterConstant.Char = CHAR 
+
+lexical sorts CHAR // CharChar
 lexical syntax 
   CHAR     = "'" CharChar "'"
   CharChar = ~[\\\']
   CharChar = "\\" [ntvbrfa\\\?\'\"]
   CharChar = "\\ooo"
   CharChar = "\\x" [0-9a-fA-F] [0-9a-fA-F]
+  CharChar = "\\0"
 
-
+lexical sorts STRING // StringChar BackSlashChar
 lexical syntax // strings
   STRING     = [L]? "\"" StringChar* "\"" 
   StringChar = ~[\"\n] 

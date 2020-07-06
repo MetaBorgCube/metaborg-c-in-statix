@@ -2,6 +2,7 @@ module c-preprocessor
 
 imports c-lexical
 
+sorts WS FileName1 FileName2 TokenSequence
 lexical syntax
   WS        = [\ \t]*
   Token     = TokenChar+
@@ -22,9 +23,11 @@ lexical restrictions
   Slash -/- [\n]
   TokenSequence -/- ~[\n]
   
+sorts PreprocessorDirective ExternalDeclaration // (already defined in c-syntax)
 context-free syntax
 
   ExternalDeclaration = PreprocessorDirective
+  PreprocessorDirective.Dummy = "%%%%%"
   
 context-free restrictions
 

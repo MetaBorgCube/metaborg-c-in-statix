@@ -1,138 +1,74 @@
 module desugar
 
 imports
-
-  src-gen/signatures/c-lexical-sig
-  src-gen/signatures/c-preprocessor-sig
-  src-gen/signatures/c-syntax-sig
-  src-gen/signatures/c18-sig
+  signatures/c-syntax-sig
+  signatures/c-lexical-sig
+  desugar/decl-specs
+  
   libstratego-lib
   
-signature
-  sorts
-    BinExp
-    UnExp
-  constructors
-    BinExp : BinOp * Exp * Exp -> Exp
-    UnExp : UnOp * Exp -> Exp
-    
-    Comma : BinOp
-    
-    AssignNorm : BinOp
-    AssignMul : BinOp
-    AssignDiv : BinOp
-    AssignMod : BinOp
-    AssignAdd : BinOp
-    AssignMin : BinOp
-    AssignLsh : BinOp
-    AssignRsh : BinOp
-    AssignAnd : BinOp
-    AssignPow : BinOp
-    AssignOr : BinOp
-    
-    LOr : BinOp
-    LAnd : BinOp
-    Ior : BinOp
-    Eor : BinOp
-    And : BinOp
-    
-    Add : BinOp
-    Sub : BinOp
-    Mul : BinOp
-    Div : BinOp
-    Mod : BinOp
-    
-    Lshift : BinOp
-    Rshift : BinOp
-    
-    Eq : BinOp
-    Neq : BinOp
-    Lt : BinOp
-    Gt : BinOp
-    Leq : BinOp
-    Geq : BinOp
-    
-    PreInc : UnOp
-    PreDec : UnOp
-    UnOp : UnOp
-    Sizeof : UnOp
-    SizeofT : UnOp
-    Alignof : UnOp
-    AlignofT : UnOp
-    Subscript : UnOp
-    PostInc : UnOp
-    PostDec : UnOp
-    
-    Addr : UnOp
-    Deref : UnOp
-    Uplus : UnOp
-    Umin : UnOp
-    Tilde : UnOp
-    Not : UnOp
-    
-    UnOp : UnOp
-        
+strategies
+  
+  decl-to-fundef(|ds, ss) = ?Decl(t, [dt]); !FunDef(t, dt, ds, ss)
+  decl-to-paramdecl: Decl(t, [dt]) -> ParamDecl1(t, dt)
+  decl-to-paramdecl2: Decl(t, _) -> ParamDecl2(t, NoAbstractDeclarator())
+  
+strategies
+
+  gen-unidecl(|t) = ?a; !Decl(t, [a])
     
 rules
 
-  desugar-all = topdown(try(desugar))
+  desugar-all = topdown(try(desugar)); 
+    sort-decl-spec-all
   
-  desugar: Comma(a, b) -> BinExp(Comma(), a, b)
+  desugar: Subscript(a, b) -> UnOp(Deref(), Add(a, b))
+  desugar: DerefProj(e, i) -> Proj(UnOp(Deref(), e), i)
   
-  desugar: Assign(a, AssignMul(), b) -> BinExp(AssignMul(), a, b)
-  desugar: Assign(a, AssignDiv(), b) -> BinExp(AssignDiv(), a, b)
-  desugar: Assign(a, AssignMod(), b) -> BinExp(AssignMod(), a, b)
-  desugar: Assign(a, AssignAdd(), b) -> BinExp(AssignAdd(), a, b)
-  desugar: Assign(a, AssignMin(), b) -> BinExp(AssignMin(), a, b)
-  desugar: Assign(a, AssignLsh(), b) -> BinExp(AssignLsh(), a, b)
-  desugar: Assign(a, AssignRsh(), b) -> BinExp(AssignRsh(), a, b)
-  desugar: Assign(a, AssignAnd(), b) -> BinExp(AssignAnd(), a, b)
-  desugar: Assign(a, AssignPow(), b) -> BinExp(AssignPow(), a, b)
-  desugar: Assign(a, AssignOr(), b) -> BinExp(AssignOr(), a, b)
-  
-  desugar: LAnd(a, b) -> BinExp(LAnd(), a, b)
-  desugar: Ior(a, b) -> BinExp(Ior(), a, b)
-  desugar: Eor(a, b) -> BinExp(Eor(), a, b)
-  desugar: And(a, b) -> BinExp(And(), a, b)
-
-  desugar: Add(a, b) -> BinExp(Add(), a, b)
-  desugar: Sub(a, b) -> BinExp(Sub(), a, b)
-  desugar: Mul(a, b) -> BinExp(Mul(), a, b)
-  desugar: Div(a, b) -> BinExp(Div(), a, b)
-  desugar: Mod(a, b) -> BinExp(Mod(), a, b)
-
-  desugar: Lshift(a, b) -> BinExp(Lshift(), a, b)
-  desugar: Rshift(a, b) -> BinExp(Rshift(), a, b)
-
-  desugar: Eq(a, b) -> BinExp(Eq(), a, b)
-  desugar: Neq(a, b) -> BinExp(Neq(), a, b)
-  desugar: Lt(a, b) -> BinExp(Lt(), a, b)
-  desugar: Gt(a, b) -> BinExp(Gt(), a, b)
-  desugar: Leq(a, b) -> BinExp(Leq(), a, b)
-  desugar: Geq(a, b) -> BinExp(Geq(), a, b)
-  
-  desugar: Sizeof(e) -> UnExp(Sizeof(), e)
-  desugar: SizeofT(e) -> UnExp(SizeofT(), e)
-  desugar: Alignof(e) -> UnExp(Alignof(), e)
-  desugar: AlignofT(e) -> UnExp(AlignofT(), e)
-  
-  desugar: UnOp(Addr(), e) -> UnExp(Addr(), e)
-  desugar: UnOp(Deref(), e) -> UnExp(Deref(), e)
-  desugar: UnOp(Uplus(), e) -> UnExp(Uplus(), e)
-  desugar: UnOp(Umin(), e) -> UnExp(Umin(), e)
-  desugar: UnOp(Tilde(), e) -> UnExp(Tilde(), e)
-  desugar: UnOp(Not(), e) -> UnExp(Not(), e)
-  
-  desugar: Subscript(a, b) -> UnExp(Deref(), BinExp(Add(), a, b))
-  desugar: DerefProj(e, i) -> Proj(UnExp(Deref(), e), i)
-  
-  desugar: While(c, s) -> For(None(), c, None(), s) 
+  desugar: While(c, s) -> For(NoInitClause(), c, NoExp(), s)
   desugar: If(c, s) -> IfElse(c, s, Nop())
+  desugar: For(ForInitDecl(ds, i), c, s, ss) -> Compound([Decl(ds, i), For(NoInitClause(), c, s, ss)])
   
-  desugar: PreInc(e) -> BinExp(AssignAdd(), e, DecInt(1))
-  desugar: PreDec(e) -> BinExp(AssignMin(), e, DecInt(1))
+  desugar: PreInc(e) -> Assign(e, AssignAdd(), DecInt("1"))
+  desugar: PreDec(e) -> Assign(e, AssignMin(), DecInt("1"))
   
-  desugar: PostInc(e) -> BinExp(Sub(), PreInc(e), DecInt(1))
-  desugar: PostDec(e) -> BinExp(Add(), PreDec(e), DecInt(1))
+  desugar: PostInc(e) -> Sub(PreInc(e), DecInt("1"))
+  desugar: PostDec(e) -> Add(PreDec(e), DecInt("1"))
   
-  desugar: LOr(a, b) -> UnExp(Not(), LAnd(UnExp(Not(), a), UnExp(Not(), b)))
+  desugar: LOr(a, b) -> UnOp(Not(), LAnd(UnOp(Not(), a), UnOp(Not(), b)))
+
+  desugar: InitializerComma(is) -> Initializer(is)
+
+  desugar: ArrayDecl1(dd, _) -> ArrayDecl(dd)
+  desugar: ArrayDecl2(dd, _) -> ArrayDecl(dd)
+  desugar: ArrayDeclLength1(dd, _, e) -> ArrayDeclLength(dd, e)
+  desugar: ArrayDeclLength2(dd, _, e) -> ArrayDeclLength(dd, e)
+  desugar: ArrayDeclLength3(dd, _, e) -> ArrayDeclLength(dd, e)
+
+rules
+
+  desugar-pointers-all = bottomup(try(desugar-pointers))
+
+  // Regular variable declarations (int *a, b;)
+  desugar-pointers: Decl(t, []) -> Decl(t, []) 
+  desugar-pointers: Decl(t, dt) -> <map(gen-unidecl(|t))> dt
+  // Named parameters (int *a)
+  desugar-pointers: ParamDecl1(t, dt) -> 
+      <decl-to-paramdecl> <gen-unidecl(|t)> dt
+  // Anonymous parameters, nothing special (int) 
+  desugar-pointers: ParamDecl2(t, NoAbstractDeclarator()) -> 
+      <decl-to-paramdecl2> <gen-unidecl(|t)> Declarator(NoPointer(), IdDecl("dummy"))
+  // Anonymous parameters, with pointers (int *)
+  desugar-pointers: ParamDecl2(t, [p@Pointer(_, _)]) -> 
+      <decl-to-paramdecl2> <gen-unidecl(|t)> Declarator([p], IdDecl("dummy"))
+  // Function definition (return type only, e.g. int *__errno_location(void))
+  desugar-pointers: FunDef(t, dt, ds, ss) -> 
+      <decl-to-fundef(|ds, ss)> <gen-unidecl(|t)> dt
+
+rules
+
+  collapse-decls-all = topdown(try(collapse-decls))
+
+  collapse-decls: TranslationUnit(ds) -> TranslationUnit(<flatten-list> ds)
+  collapse-decls: FunDef(ds, d, vds, ss) -> FunDef(ds, d, <flatten-list> vds, ss)
+  collapse-decls: Compound(ds) -> Compound(<flatten-list> ds)

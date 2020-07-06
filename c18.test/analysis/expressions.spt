@@ -1,0 +1,39 @@
+module analysis/expressions
+language c18
+
+test cast [[
+int main(void) {
+  char c = (char) 12;
+}
+]] analysis succeeds
+
+test add to pointer [[
+int main(void) {
+  int *a;
+  a + 1;
+}
+]] analysis succeeds
+
+test in-place increment pointer [[
+int main(void) {
+  unsigned long *p;
+  p += 2;
+}
+]] analysis succeeds
+
+test multiply pointer fails [[
+int main(void) {
+  const char **list_of_strings;
+  list_of_strings * 2;
+}
+]] analysis fails
+
+test comma has trailing type [[
+int main(void) {
+  int thingy = ("this is a string!", 6);
+}
+]] analysis succeeds
+
+
+
+

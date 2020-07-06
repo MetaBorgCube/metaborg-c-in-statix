@@ -15,3 +15,10 @@ references
   reference _ : editor-resolve
 
   hover _ : editor-hover
+
+menus
+  menu: "Analysis" (openeditor)
+    action: "Show analysed"        = debug-show-analyzed        (source)
+    action: "Explicate injections" = explicate-injections-aterm (source)
+    action: "Explicate injections (desugared)" = explicate-injections-desugared-aterm (source)
+    

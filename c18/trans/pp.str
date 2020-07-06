@@ -7,6 +7,7 @@ imports
   libspoofax/editor/refactoring/-
   pp/c18-parenthesize
   pp/c18-pp
+  desugar
 
 rules
 
@@ -16,6 +17,13 @@ rules
       ext      := <get-extension> path
     ; filename := <guarantee-extension(|$[pp.[ext]])> path
     ; result   := <pp-debug> node
+    
+  editor-format-desugared:
+    (node, _, ast, path, project-path) -> (filename, result)
+    with
+      ext      := <get-extension> path
+    ; filename := <guarantee-extension(|$[pp.[ext]])> path
+    ; result   := <pp-debug> <desugar-all> node
 
 rules
   

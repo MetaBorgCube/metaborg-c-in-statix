@@ -1,0 +1,34 @@
+module analysis/labels
+language c18
+
+test redefinition of label 1 [[
+int main() {
+  int a;
+  
+  label1: a = 1;
+  label1: a++;
+   
+  return 0;
+}
+]] analysis fails
+
+test redefinition of label 2 [[
+int main() {
+  int a;
+  
+  label1: a = 1;
+  
+  while (a - 1 >= 0) {
+    label1: a++;
+  } 
+   
+  return 0;
+}
+]] analysis fails
+
+test undeclared label [[
+int main() {
+  goto label;
+  return 0;
+}
+]] analysis fails

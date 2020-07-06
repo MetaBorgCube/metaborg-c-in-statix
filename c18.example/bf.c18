@@ -1,0 +1,104 @@
+/* This is the Neutron brainfuck interpreter.
+ * It's rather small and dense, but still readable, more or less.
+ *
+ * Robert de Bath -- 2013.
+ */
+ 
+typedef struct FILE FILE;
+ 
+extern int fprintf(FILE *, const char *, ...);
+extern void *calloc(unsigned long nmemb, unsigned long long size);
+extern void setbuf(FILE *stream, char *buf);
+extern int strcmp(const char *s1, const char *s2);
+extern FILE *fopen(const char *pathname, const char *mode);
+extern void exit(int);
+extern int getc(FILE *stream);
+extern void perror(const char *s);
+extern void fclose(FILE *);
+extern void putchar(int);
+extern int getchar(void);
+
+extern int eof;
+extern FILE *stdout;
+extern FILE *stdin;
+extern FILE *stderr;
+ 
+struct Bfi { char cmd; struct Bfi *next, *jmp; };
+struct Mem { char val; struct Mem *next, *prev; };
+ 
+int main(int argc, char **argv)
+{
+
+    FILE * ifd;
+    int ch;
+    struct Bfi *p=NULL, *n=NULL, *j=NULL, *pgm = NULL;
+    struct Mem *m;
+    m = calloc(1, (unsigned long long) sizeof*m);
+    setbuf(stdout, NULL);
+ 
+    /* Open the file from the command line or stdin */
+    if (argc < 2 || strcmp(argv[1], "-") == 0) ifd = stdin;
+    else if ((ifd = fopen(argv[1], "r")) == NULL) { perror(argv[1]); exit(1); }
+ 
+    /*
+     *  For each character, if it's a valid BF command add it onto the
+     *  end of the program. If the input is stdin use the '!' character
+     *  to mark the end of the program and the start of the data, but
+     *  only if we have a complete program.  The 'j' variable points
+     *  at the list of currently open '[' commands, one is matched off
+     *  by each ']'.  A ']' without a matching '[' is not a legal BF
+     *  command and so is ignored.  If there are any '[' commands left
+     *  over at the end they are not valid BF commands and so are ignored.
+     */
+    while((ch = getc(ifd)) != eof && (ifd!=stdin || ch != '!' || j || !pgm));
+    {
+        if (ch == '<' || ch == '>' || ch == '+' || ch == '-' ||
+            ch == ',' || ch == '.' || ch == '[' || (ch == ']' && j)) {
+            if ((n = calloc(1, (unsigned long long) sizeof*n)) == 0) {
+                perror(argv[0]); exit(1);
+            }
+            if (p) p->next = n; else pgm = n;
+            n->cmd = (char) ch; p = n;
+            if (n->cmd == '[') { n->jmp=j; j = n; }
+            else if (n->cmd == ']') {
+                n->jmp = j; j = j->jmp; n->jmp->jmp = n;
+            }
+        }
+    }
+ 
+    /* Ignore any left over '[' commands */
+    while(j) { p = j; j = j->jmp; p->jmp = NULL; p->cmd = (char) ' '; }
+ 
+    if (ifd!=stdin) fclose(ifd);
+ 
+    /* Execute the loaded BF program */
+    for(n=pgm; n; n=n->next)
+        switch((int) n->cmd)
+        {
+            case '+':
+              m->val = (char) (m->val + 1); 
+              break;
+            case '-': m->val = (char) (m->val - 1); break;
+            case '.': putchar(m->val); break;
+            case ',': if((ch=getchar())!=eof) m->val=(char)ch; break;
+            case '[': if (m->val == 0) n=n->jmp; break;
+            case ']': if (m->val != 0) n=n->jmp; break;
+            case '<':
+                if (!(m=m->prev)) {
+                    fprintf(stderr, "%s: Hit start of tape\n", argv[0]);
+                    exit(1);
+                }
+                break;
+            case '>':
+                if (m->next == 0) {
+                    if ((m->next = calloc(1, (unsigned long long) sizeof*m)) == 0) {
+                        perror(argv[0]); exit(1);
+                    }
+                    m->next->prev = m;
+                }
+                m=m->next;
+                break;
+        }
+ 
+    return 0;
+}

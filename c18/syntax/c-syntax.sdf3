@@ -3,7 +3,7 @@ module c-syntax
 imports c-lexical
 imports c-preprocessor
 
-sorts TranslationUnit ExternalDeclaration FunctionDefinition Declaration
+sorts TranslationUnit FunctionDefinition Declaration // ExternalDeclaration 
 
 context-free syntax
 
@@ -57,7 +57,7 @@ context-free syntax
   TypeSpecifier.Imaginary = <_Imaginary>
   TypeSpecifier           = StructOrUnionSpecifier 
   TypeSpecifier           = EnumSpecifier 
-  TypeSpecifier.TypedefName = <<TypeID>>
+  TypeSpecifier.TypedefName1 = <<TypeID>>
   
   TypeQualifier.Const     = <const> 
   TypeQualifier.Restrict  = <restrict>
@@ -70,6 +70,10 @@ context-free syntax
   AlignmentSpecifier.AlignasConstexpr = <_Alignas(<ConstExp>)>
   AlignmentSpecifier.AlignasType = <_Alignas(<DirectDeclarator>)>
 
+sorts StructDeclarator-OPT
+context-free syntax
+  StructDeclarator-OPT                    = StructDeclarator
+  StructDeclarator-OPT.NoStructDeclarator = <>
 
 sorts StaticAssert StructOrUnionSpecifier StructOrUnion InitDeclarator StructDeclaration SpecifierQualifier
 	  StructDeclarator EnumSpecifier
@@ -79,7 +83,7 @@ context-free syntax
   StaticAssert.StaticAssert = <_Static_assert(<ConstExp>, <STRING>)>
   
   StructOrUnionSpecifier.StructOrUnion = <
-    <StructOrUnion> <TypeID?> { 
+    <StructOrUnion> <TypeID-OPT> {
       <StructDeclaration+> 
     }
   > 
@@ -109,11 +113,11 @@ context-free syntax
   StructDeclarator = Declarator 
   
   StructDeclarator.StructDeclor = <
-    <StructDeclarator?> : <ConstExp>
+    <StructDeclarator-OPT> : <ConstExp>
   > 
   
   EnumSpecifier.EnumSpec = <
-    enum <TypeID?> { 
+    enum <TypeID-OPT> {
       <{Enumerator ", "}+> 
     }
   > 
@@ -121,6 +125,14 @@ context-free syntax
     enum <TypeID>
   > 
 
+sorts ParameterTypeList-OPT Pointer-OPT
+context-free syntax
+
+  ParameterTypeList-OPT                     = ParameterTypeList
+  ParameterTypeList-OPT.NoParameterTypeList = <>
+
+  Pointer-OPT           = Pointer
+  Pointer-OPT.NoPointer = <>
 
 sorts Enumerator Declarator DirectDeclarator ParameterTypeList ParameterDeclaration Initializer TypeName Pointer
 
@@ -132,19 +144,26 @@ context-free syntax
   > 
   
   Declarator.Declarator = <
-    <Pointer?> <DirectDeclarator>
+    <Pointer-OPT> <DirectDeclarator>
   > 
   
-  DirectDeclarator.IdDecl = ID 
-  DirectDeclarator.DeclBracket = <(<Declarator>)> 
-  DirectDeclarator.ArrayDecl = <<DirectDeclarator> [<ConstExp?>]> 
+  DirectDeclarator.IdDecl = ID
+  DirectDeclarator.DeclBracket = <(<Declarator>)>
+  DirectDeclarator.ArrayDecl = <<DirectDeclarator> [ ]>
+  DirectDeclarator.ArrayDecl1 = <<DirectDeclarator> [<TypeQualifier+>]>
+  DirectDeclarator.ArrayDecl2 = <<DirectDeclarator> [<TypeQualifier*> *]>
+  DirectDeclarator.ArrayDeclLength = <<DirectDeclarator> [<AssignExp>]>
+  DirectDeclarator.ArrayDeclLength1 = <<DirectDeclarator> [<TypeQualifier+> <AssignExp>]>
+  DirectDeclarator.ArrayDeclLength2 = <<DirectDeclarator> [static <TypeQualifier*> <AssignExp>]>
+  DirectDeclarator.ArrayDeclLength3 = <<DirectDeclarator> [<TypeQualifier+> static <AssignExp>]>
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
+  DirectDeclarator.IdListDecl = <(<ID*>)>
   
-  ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}+>> 
+  ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}*>>
   ParameterTypeList.ParamListVarArgs = <<{ParameterDeclaration ", "}+> , ...> 
   ParameterDeclaration.ParamDecl1 = <<DeclarationSpecifier+> <Declarator>> 
-  ParameterDeclaration.ParamDecl2 = <<DeclarationSpecifier+> <AbstractDeclarator?>> 
-  
+  ParameterDeclaration.ParamDecl2 = <<DeclarationSpecifier+> <AbstractDeclarator-OPT>>
+
   Initializer = AssignExp 
   
   Initializer.Initializer = <
@@ -154,14 +173,24 @@ context-free syntax
     { <{Initializer ", "}+> , }
   > 
   
-  TypeName.TypedefName = <
-    <SpecifierQualifier+> <AbstractDeclarator?>
+  TypeName.TypedefName2 = <
+    <SpecifierQualifier+> <AbstractDeclarator-OPT>
   > 
 
   TypeName = TypeID 
   
-  Pointer.Pointer = <* <TypeQualifier*>> 
-  Pointer.PointerN = <* <TypeQualifier*> <Pointer>>
+  Pointer.Pointer = <<Pointer-OPT> *<TypeQualifier*>>
+
+sorts AbstractDeclarator-OPT DirectAbstractDeclarator-OPT InitClause-OPT
+context-free syntax
+  AbstractDeclarator-OPT                      = AbstractDeclarator
+  AbstractDeclarator-OPT.NoAbstractDeclarator = <>
+
+  DirectAbstractDeclarator-OPT                            = DirectAbstractDeclarator
+  DirectAbstractDeclarator-OPT.NoDirectAbstractDeclarator = <>
+
+  InitClause-OPT = InitClause
+  InitClause-OPT.NoInitClause = <>
 
 sorts AbstractDeclarator DirectAbstractDeclarator Statement BlockItem CompoundStatement InitClause
 
@@ -170,17 +199,17 @@ context-free syntax
   AbstractDeclarator = Pointer 
   
   AbstractDeclarator.DirDecl = <
-    <Pointer?> <DirectAbstractDeclarator>
+    <Pointer-OPT> <DirectAbstractDeclarator>
   > 
-  
+
   DirectAbstractDeclarator.AbsDecl = <
     (<AbstractDeclarator>)
   > 
   DirectAbstractDeclarator.AArrayDecl = <
-    <DirectAbstractDeclarator?>[<ConstExp>]
+    <DirectAbstractDeclarator-OPT>[<ConstExp>]
   > 
   DirectAbstractDeclarator.AFunDecl = <
-    <DirectAbstractDeclarator?>(<ParameterTypeList?>)
+    <DirectAbstractDeclarator-OPT>(<ParameterTypeList-OPT>)
   > 
   
   Statement.Label   = <<ID> : <Statement>> 
@@ -224,16 +253,16 @@ context-free syntax
     while(<Exp>);
   > 
   Statement.For = <
-    for(<InitClause?>; <Exp?>; <Exp?>) 
+    for(<InitClause-OPT>; <Exp-OPT>; <Exp-OPT>)
       <Statement>
   > 
   Statement.Goto = <
     goto <ID>;
   > 
-  Statement.Continue = <continue;> 
-  Statement.Break    = <break;> 
-  Statement.Return   = <return <Exp?>;> 
-  
+  Statement.Continue = <continue ;> 
+  Statement.Break    = <break ;> 
+  Statement.Return   = <return <Exp-OPT>;>
+
   InitClause = Exp
   InitClause.ForInitDecl = <<DeclarationSpecifier+> <{InitDeclarator ", "}*>>
 
@@ -241,54 +270,61 @@ context-free syntax
 //
 //  Start = Exp 
 
-sorts Exp
+sorts Exp Exp-OPT EqNeqOp OrderOp ShiftOp MulDivOp
 context-free syntax
+
+  Exp-OPT       = Exp
+  Exp-OPT.NoExp = <>
 
   Exp.Comma = <<Exp> , <Exp>> {left}
   
   Exp.Assign = <<Exp> <AssignOp> <Exp>> {right}
   Exp.Cond   = <<Exp> ? <Exp> : <Exp>> {right}
   
-  Exp.LOr  = <<Exp> || <Exp>> {left}
+  Exp.LOr = <<Exp> || <Exp>> {left}
   Exp.LAnd = <<Exp> && <Exp>> {left}
-  Exp.Ior  = <<Exp> | <Exp>> {left}
-  Exp.Eor  = <<Exp> ^ <Exp>> {left}
-  Exp.And  = <<Exp> & <Exp>> {left}
+  Exp.Ior = <<Exp> | <Exp>> {left}
+  Exp.Eor = <<Exp> ^ <Exp>> {left}
+  Exp.And = <<Exp> & <Exp>> {left}
   
-  Exp.Eq   = <<Exp> == <Exp>> {left}
-  Exp.Neq  = <<Exp> != <Exp>> {left}
-  Exp.Lt   = [[Exp] < [Exp]] {left}
-  Exp.Gt   = [[Exp] > [Exp]] {left}
-  Exp.Leq  = [[Exp] <= [Exp]] {left}
-  Exp.Geq  = [[Exp] >= [Exp]] {left}
+  Exp.EqNeq = <<Exp> <EqNeqOp> <Exp>> {left}
+  EqNeqOp.Eq = [==]
+  EqNeqOp.Neq = <!=>
+  Exp.Order = <<Exp> <OrderOp> <Exp>> {left}
+  OrderOp.Lt = [<]
+  OrderOp.Gt = [>]
+  OrderOp.Leq = [<=]
+  OrderOp.Geq = [>=]
   
-  Exp.Lshift = [[Exp] << [Exp]] {left}
-  Exp.Rshift = [[Exp] >> [Exp]] {left}
+  Exp.Shift = <<Exp> <ShiftOp> <Exp>> {left}
+  ShiftOp.Lshift = [<<]
+  ShiftOp.Rshift = [>>]
   
   Exp.Add = <<Exp> + <Exp>> {left}
   Exp.Sub = <<Exp> - <Exp>> {left}
-  Exp.Mul = <<Exp> * <Exp>> {left}
-  Exp.Div = <<Exp> / <Exp>> {left}
+  
+  Exp.MulDiv = <<Exp> <MulDivOp> <Exp>> {left}
+  MulDivOp.Mul = <*>
+  MulDivOp.Div = </>
+
   Exp.Mod = <<Exp> % <Exp>> {left}
   
   Exp.Cast      = <(<TypeName>)<Exp>> 
   Exp.PreInc    = <++<Exp>> 
-  Exp.PreDec    = <--<Exp>> 
-  Exp.UnOp      = <<UnaryOp> <Exp>> 
-  Exp.Sizeof    = <sizeof <Exp>> 
-  Exp.SizeofT   = <sizeof(<TypeName>)> 
-  Exp.Alignof   = <_Alignof <Exp>>
+  Exp.PreDec    = [--[Exp]]
+  Exp.UnOp      = <<UnaryOp> <Exp>>
+  Exp.SizeofT   = <sizeof(<TypeName>)>
   Exp.AlignofT  = <_Alignof(<TypeName>)>
   Exp.Subscript = <<Exp>[<Exp>]> 
   Exp.Call      = <<Exp>(<{Exp ", "}*>)> 
   Exp.Proj      = <<Exp>.<ID>> 
   Exp.DerefProj = [[Exp] -> [ID]]
   Exp.PostInc   = <<Exp>++> 
-  Exp.PostDec   = <<Exp>--> 
+  Exp.PostDec   = [[Exp]--]
   Exp.Var       = ID 
   Exp           = Constant 
-  Exp.String    = STRING 
-  Exp.LChar     = CHAR
+  Exp.String    = STRING
+  Exp.Null      = <NULL>
   Exp           = <(<Exp>)> {bracket}
 
 sorts ConstExp AssignExp
@@ -315,28 +351,21 @@ context-free priorities
    Exp.PreInc
    Exp.PreDec
    Exp.UnOp
-   Exp.Sizeof
    Exp.SizeofT
   } 
   > Exp.Cast 
   > {left :
-   Exp.Mul
-   Exp.Div
+   Exp.MulDiv
    Exp.Mod
   } > {left :
     Exp.Add
     Exp.Sub
   } > {left :
-    Exp.Lshift
-    Exp.Rshift
+    Exp.Shift
   } > {left :
-    Exp.Lt
-    Exp.Gt
-    Exp.Leq
-    Exp.Geq
+    Exp.Order
   } > {left :
-    Exp.Eq
-    Exp.Neq
+    Exp.EqNeq
   } 
   > Exp.And 
   > Exp.Eor > Exp.Ior 
@@ -353,19 +382,13 @@ context-free priorities
 context-free priorities
 
   Exp.Assign <0>. > {Exp.Cast
-                     Exp.Mul
-                     Exp.Div
+                     Exp.MulDiv
                      Exp.Mod
                      Exp.Add
                      Exp.Sub
-                     Exp.Lshift
-                     Exp.Rshift
-                     Exp.Lt
-                     Exp.Gt
-                     Exp.Leq
-                     Exp.Geq
-                     Exp.Eq
-                     Exp.Neq
+                     Exp.Shift
+                     Exp.Order
+                     Exp.EqNeq
                      Exp.And
                      Exp.Eor
                      Exp.Ior
@@ -397,13 +420,15 @@ context-free syntax
   UnaryOp.Umin = <-> 
   UnaryOp.Tilde = <~> 
   UnaryOp.Not = <!>
+  UnaryOp.Sizeof = <sizeof>
+  UnaryOp.Alignof = <_Alignof>
    
 lexical restrictions
 
   "+" -/- [\+]
   "-" -/- [\-]
+  "&" -/- [\&]
   
-
-
-
-
+template options
+  ID = keyword {reject}
+  TypeID = keyword {reject}

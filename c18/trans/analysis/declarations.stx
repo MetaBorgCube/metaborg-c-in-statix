@@ -1,0 +1,446 @@
+module analysis/declarations
+
+imports
+  signatures/c-syntax-sig
+
+  analysis/expressions
+  analysis/statements
+  analysis/types
+  analysis/util
+
+signature
+  namespaces
+    // actual C namespaces
+    VarFunType      : ID
+    StructUnionEnum : ID
+    StructMember          : ID * int
+    Label           : ID
+
+    // helper namespaces
+    FunProto          : ID
+    Return          :
+
+  name-resolution labels P F
+    resolve VarFunType      filter P*    min $ < P
+    resolve StructUnionEnum filter P*    min $ < P
+    resolve StructMember          filter P*    min $ < P
+    resolve Label           filter P* F* min $ < P, $ < F, F < P
+
+    resolve FunProto          filter P*    min $ < P
+    resolve Return          filter P*    min $ < P
+
+  relations
+    type : occurrence -> TYPE
+
+
+rules
+  translationUnitOk : TranslationUnit
+  translationUnitOk(TranslationUnit(extDecls)) :- {s}
+    new s,
+    extDeclListOk(s, extDecls).
+
+  extDeclOk : scope * ExternalDeclaration
+  extDeclListOk maps extDeclOk(*, list(*))
+  extDeclOk(s, FunctionDefinition2ExternalDeclaration(funDef)) :-
+    funDefOk(s, funDef).
+  extDeclOk(s, Declaration2ExternalDeclaration(decl)) :-
+    declOk(s, decl).
+
+  // FunDef : list(DeclarationSpecifier) * Declarator * list(Declaration) * CompoundStatement -> FunctionDefinition
+  funDefOk : scope * FunctionDefinition
+  funDefOk(s, FunDef(declSpecs, Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))), decls, compStmt)) :- {s_fun paramIDs paramTs retT retTu qRes}
+    declSpecsToType(s, declSpecs) == retTu,
+    typeOfPointer(p, retTu) == retT,
+    new s_fun,
+    s_fun -P-> s,
+    s_fun -> Return{} with type retT,
+    paramsOk(s_fun, params) == (paramIDs, paramTs),
+    declsOk(s_fun, decls),
+    compStmtOk(s_fun, compStmt),
+    defineFun(s, id, FUN(paramTs, retT)),
+    declareVars(s_fun, paramIDs, paramTs),
+    mainOk(s, id, paramTs, retT) | error "parameter types on 'main' have incorrect types".
+    
+    
+rules foldVoidParam : list(TYPE) -> list(TYPE)
+
+  foldVoidParam([VOID()]) = [].
+  foldVoidParam(P) = P.
+
+
+  mainOk : scope * ID * list(TYPE) * TYPE
+  mainOk(s, id, _, _) :-
+	id != "main".
+  mainOk(s, "main", [], INT()).
+  mainOk(s, "main", [VOID()], INT()).
+  mainOk(s, "main", [INT()], INT()) :-
+	try {"a" == "b"} | warning "only one parameter on 'main' declaration".
+  mainOk(s, "main", [INT(), POINTER(POINTER(CHAR()))], INT()).
+
+  initClauseOk : scope * InitClause
+  initClauseOk(s, Exp2InitClause(e)) :-
+    typeOfExp(s, e) == _. // TODO more constraints on this?
+
+  initClauseOptOk : scope * InitClause-OPT
+  initClauseOptOk(_, NoInitClause()).
+  initClauseOptOk(s_for, InitClause2InitClause-OPT(init)) :-
+	initClauseOk(s_for, init).
+
+  initDeclrtrOk : scope * TYPE * InitDeclarator -> ID
+  // TODO When assigning, types do not have to match exactly. For example, assignments between int types are (mostly) allowed.
+  initDeclrtrOk(s, T, InitDecl(decl, AssignExp2Initializer(Exp2AssignExp(e)))) = id :- {T'}
+    declrtrOk(s, decl) == id,
+    typeOfExp(s, e) == T', // expression type
+    lub(T, T') == T.
+  initDeclrtrOk(s, _, Declarator2InitDeclarator(decl)) = id :-
+    declrtrOk(s, decl) == id.
+  initDeclrtrOk(s, STRUCT(s_struct), InitDecl(decl, Initializer(is))) = id :-
+    declrtrOk(s, decl) == id,
+    initializersOk(s, s_struct, is, 0).
+  initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDecl(IdDecl(id))), Initializer(vals))) = id :-
+	initializerTypesOk(s, T, vals). // TODO check nested arrays and lengths
+  initDeclrtrOk(s, T, InitDecl(Declarator(p, ArrayDeclLength(IdDecl(id), l)), Initializer(vals))) = id :- {Te e}
+	initializerTypesOk(s, T, vals),
+	Exp2AssignExp(e) == l,
+	typeOfExp(s, e) == Te,
+	intType(Te). // TODO check nested arrays and lengths
+
+rules initializerTypesOk : scope * TYPE * list(Initializer)
+	initializerTypesOk(s, T, [i]) :- {e}
+		i == AssignExp2Initializer(Exp2AssignExp(e)),
+		typeOfExp(s, e) == T.
+	initializerTypesOk(s, T, [i | is]) :- {e}
+		i == AssignExp2Initializer(Exp2AssignExp(e)),
+		typeOfExp(s, e) == T,
+		initializerTypesOk(s, T, is).
+    
+rules initializerOk : scope * scope * Initializer * int
+
+  initializerOk(s, s_struct, AssignExp2Initializer(Exp2AssignExp(e)), pos) :-
+    typeOfStructMemberAt(s_struct, pos) == typeOfExp(s, e).
+    
+  initializerOk(s, s_struct, Initializer(is), pos) :- {s_substruct}
+    typeOfStructMemberAt(s_struct, pos) == STRUCT(s_substruct),
+    initializersOk(s, s_substruct, is, 0).
+
+
+rules initializersOk : scope * scope * list(Initializer) * int
+
+  initializersOk(s, s_struct, [], pos).
+  initializersOk(s, s_struct, [i | is], pos) :-
+    initializerOk(s, s_struct, i, pos),
+    initializersOk(s, s_struct, is, #(pos + 1)).
+
+  declrtrOk : scope * Declarator -> ID
+  declrtrOk(s, Declarator(_, dd)) = dirDeclrtrOk(s, dd).
+
+  dirDeclrtrOk : scope * DirectDeclarator -> ID
+
+  dirDeclrtrOk(s, IdDecl(id)) = id.
+  dirDeclrtrOk(s, DeclBracket(d)) = declrtrOk(s, d).
+  dirDeclrtrOk(s, ArrayDecl(d)) = dirDeclrtrOk(s, d).
+  dirDeclrtrOk(s, ArrayDeclLength(d, l)) = dirDeclrtrOk(s, d) :- {e}
+	Exp2AssignExp(e) == l,
+	intType(typeOfExp(s, e)).
+
+  abstDeclrtrOk : scope * AbstractDeclarator
+
+  paramOk : scope * ParameterDeclaration -> (ID * TYPE)
+  paramsOk maps paramOk(*, list(*)) = (list(*), list(*))
+  paramOk(s, ParamDecl1(declSpecs, declrtr@Declarator(p, _))) = (id, T) :- {Tu}
+    declSpecsToType(s, declSpecs) == Tu, // specified type
+    typeOfPointer(p, Tu) == T,
+    declrtrOk(s, declrtr) == id. // declared type
+  paramOk(s, ParamDecl2(declSpecs, NoAbstractDeclarator())) = ("", T) :- // ID is not known nor used
+    declSpecsToType(s, declSpecs) == T.
+  paramOk(s, ParamDecl2(declSpecs, AbstractDeclarator2AbstractDeclarator-OPT(Pointer2AbstractDeclarator(p)))) = ("", T) :- {Tu}
+    declSpecsToType(s, declSpecs) == Tu,
+    typeOfPointer(Pointer2Pointer-OPT(p), Tu) == T.
+
+  // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
+  declOk : scope * Declaration
+  declsOk maps declOk(*, list(*))
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramIDs paramTs paramTVs s_fun qRes}
+    new s_fun,
+    s_fun -P-> s,
+    declSpecsToType(s, declSpecs) == retTu,
+    typeOfPointer(p, retTu) == retT,
+    declareVars(s_fun, paramIDs, paramTs),
+    paramsOk(s_fun, params) == (paramIDs, paramTVs),
+    foldVoidParam(paramTVs) == paramTs,
+    declareFunProto(s, id, FUN(paramTs, retT)).
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamListVarArgs(params))))])) :- {retTu retT paramIDs paramTs paramTVs s_fun qRes}
+    new s_fun,
+    s_fun -P-> s,
+    declSpecsToType(s, declSpecs) == retTu,
+    typeOfPointer(p, retTu) == retT,
+    declareVars(s_fun, paramIDs, paramTs),
+    paramsOk(s, params) == (paramIDs, paramTVs),
+    foldVoidParam(paramTVs) == paramTs,
+    declareFunProto(s, id, VARFUN(paramTs, retT)).
+  declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
+    declSpecsToType(s, declSpecs) == T,
+    declareTypedef(s, id, T).
+  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDecl(IdDecl(_))), _)])) :- {id Tu T}
+  	declSpecsToType(s, declSpecs) == Tu,
+  	typeOfPointer(p, Tu) == T,
+  	initDeclrtrOk(s, T, i) == id,
+  	declareVar(s, id, POINTER(T)).
+  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDeclLength(IdDecl(_), _)), _)])) :- {id Tu T}
+	declSpecsToType(s, declSpecs) == Tu,
+	typeOfPointer(p, Tu) == T,
+	initDeclrtrOk(s, T, i) == id,
+	declareVar(s, id, POINTER(T)).
+  declOk(s, Decl(declSpecs, declrtrs)) :- {Tu}
+    declSpecsToType(s, declSpecs) == Tu,
+    multiDeclOk(s, Tu, declrtrs).
+    
+  // Typedefs, structs, unions, enums
+  declOk(s, Decl(declSpecs, [])) :-
+    declSpecsToType(s, declSpecs) == _.
+    
+    
+rules typeOfAbsDecl : scope * TYPE * AbstractDeclarator -> TYPE
+
+  typeOfAbsDecl(s, tu, DirDecl(po, dad)) = typeOfPointer(po, typeOfDirAbsDecl(s, tu, dad)). 
+  typeOfAbsDecl(_, tu, Pointer2AbstractDeclarator(p)) = typeOfPointer(Pointer2Pointer-OPT(p), tu).
+  
+  
+rules typeOfDirAbsDecl : scope * TYPE * DirectAbstractDeclarator -> TYPE
+
+  typeOfDirAbsDecl(s, tu, AbsDecl(ad)) = typeOfAbsDecl(s, tu, ad).
+  typeOfDirAbsDecl(s, tu, AArrayDecl(NoDirectAbstractDeclarator(), _)) = POINTER(tu).
+  typeOfDirAbsDecl(s, tu, AArrayDecl(DirectAbstractDeclarator2DirectAbstractDeclarator-OPT(dad), _))
+      = typeOfDirAbsDecl(s, POINTER(tu), dad).
+// TODO: function pointers
+//  typeOfDirAbsDecl(s, tu, AFunDecl(NoDirectAbstractDeclarator(), NoParameterTypeList()
+
+
+rules uniDeclOk : scope * TYPE * InitDeclarator
+  multiDeclOk maps uniDeclOk(*, *, list(*))
+
+  uniDeclOk(s, tu, i@Declarator2InitDeclarator(d@Declarator(_, _))) :-
+    declWithDeclrtr(s, tu, i, d).
+    
+  uniDeclOk(s, tu, i@InitDecl(d@Declarator(_, _), _)) :-
+    declWithDeclrtr(s, tu, i, d).
+    
+rules declWithDeclrtr : scope * TYPE * InitDeclarator * Declarator
+    
+  declWithDeclrtr(s, Tu, i, Declarator(p, _)) :- {T id}
+    typeOfPointer(p, Tu) == T,
+    initDeclrtrOk(s, T, i) == id,
+    declareVar(s, id, T).
+
+  declWithDeclrtr(s, Tu, i, Declarator(p, ArrayDecl(IdDecl(_)))) :- {T id}
+    typeOfPointer(p, Tu) == T,
+    initDeclrtrOk(s, T, i) == id,
+    declareVar(s, id, POINTER(T)).
+
+  declWithDeclrtr(s, Tu, i, Declarator(p, ArrayDeclLength(IdDecl(_), _))) :- {T id}
+    typeOfPointer(p, Tu) == T,
+    initDeclrtrOk(s, T, i) == id,
+    declareVar(s, id, POINTER(T)).
+    
+  typeOfPointer : Pointer-OPT * TYPE -> TYPE
+  typeOfPointer(NoPointer(), T) = T.
+  typeOfPointer(Pointer2Pointer-OPT(Pointer(po, q)), T) = POINTER(typeOfPointer(po, T)).
+
+  declSpecsToType : scope * list(DeclarationSpecifier) -> TYPE
+  declSpecsToType(s, specs) = typeOfType(s, declSpecsToTypeSpecs(specs)).
+
+  declSpecsToTypeSpecs : list(DeclarationSpecifier) -> list(TypeSpecifier)
+  declSpecsToTypeSpecs([]) = [].
+  declSpecsToTypeSpecs([TypeSpecifier2DeclarationSpecifier(ts) | dss]) = [ts | declSpecsToTypeSpecs(dss)].
+  declSpecsToTypeSpecs([_ | dss]) = declSpecsToTypeSpecs(dss).
+  
+  specQualsToDeclSpecs : list(SpecifierQualifier) -> list(DeclarationSpecifier)
+  specQualsToDeclSpecs([]) = [].
+  specQualsToDeclSpecs([TypeSpecifier2SpecifierQualifier(ts) | sqs]) = 
+      [TypeSpecifier2DeclarationSpecifier(ts) | specQualsToDeclSpecs(sqs)].
+  specQualsToDeclSpecs([TypeQualifier2SpecifierQualifier(tq) | sqs]) = 
+      [TypeQualifier2DeclarationSpecifier(tq) | specQualsToDeclSpecs(sqs)].
+
+
+rules typeOfEnum : scope * TypeID-OPT * list(Enumerator) -> TYPE
+
+  typeOfEnum(s, TypeID2TypeID-OPT(id), es) = T :-
+    T == ENUM(),
+    declareEnum(s, id),
+    enumeratorsOk(s, T, es).
+
+  typeOfEnum(s, NoTypeID(), es) = T :-
+    T == ENUM(),
+    enumeratorsOk(s, T, es).
+
+
+rules enumeratorOk : scope * TYPE * Enumerator
+
+  enumeratorOk(s, t, Enumerator(id, _)) :-
+    declareVar(s, id, t).
+
+  enumeratorsOk maps enumeratorOk(*, *, list(*))
+
+
+rules typeOfStructOrUnionDecl : scope * StructOrUnion * TypeID-OPT * list(StructDeclaration) -> TYPE
+
+  typeOfStructOrUnionDecl(s, Struct(), id, decls) = T :- {s_struct}
+    new s_struct,
+    structDeclsOk(s, s_struct, decls, 0),
+    STRUCT(s_struct) == T,
+    defineStructOrUnion(s, id, T).
+    
+  typeOfStructOrUnionDecl(s, Union(), id, decls) = T :- {s_union}
+    new s_union,
+    structDeclsOk(s, s_union, decls, 0),
+    UNION(s_union) == T,
+    defineStructOrUnion(s, id, T).
+    
+rules defineStructOrUnion : scope * TypeID-OPT * TYPE
+
+  defineStructOrUnion(_, NoTypeID(), _).
+  defineStructOrUnion(s, TypeID2TypeID-OPT(id), T) :- {id'}
+    declareStructOrUnion(s, id, T).    
+    
+rules structDeclOk : scope * scope * StructDeclaration * int -> int
+
+  structDeclOk(s, s_struct, StructDecl(qs, decls), pos) = EPOS :- {T}
+    declSpecsToType(s, specQualsToDeclSpecs(qs)) == T,
+    structMultiDeclOk(s, s_struct, T, decls, pos) == EPOS.
+    
+rules structDeclsOk : scope * scope * list(StructDeclaration) * int
+  
+  structDeclsOk(_, _, [], _).
+  structDeclsOk(s, s_struct, [d | ds], pos) :- {EPOS}
+    structDeclOk(s, s_struct, d, pos) == EPOS,
+    structDeclsOk(s, s_struct, ds, EPOS).
+    
+rules structUniDeclOk : scope * scope * TYPE * StructDeclarator * int
+  
+  structUniDeclOk(s, s_struct, t, Declarator2StructDeclarator(d@Declarator(p, _)), pos) :- {id T}
+    typeOfPointer(p, t) == T,
+    declrtrOk(s_struct, d) == id,
+    declareStructMember(s_struct, id, pos, T).
+    
+rules structMultiDeclOk : scope * scope * TYPE * list(StructDeclarator) * int -> int
+
+  structMultiDeclOk(_, _, _, [], epos) = epos.
+  structMultiDeclOk(s, s_struct, t, [d | ds], pos) = EPOS :-
+    structUniDeclOk(s, s_struct, t, d, pos),
+    structMultiDeclOk(s, s_struct, t, ds, #(pos + 1)) == EPOS.
+
+rules // declaring / resolving variables and functions
+  declareVar : scope * ID * TYPE
+  declareVars maps declareVar(*, list(*), list(*))
+  declareVar(s, id, T) :-
+    s -> VarFunType{id} with type T,
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id}, _))] | error $[Variable [id] already defined].
+
+  typeOfVar : scope * ID -> TYPE
+  typeOfVar(s, id) = T :- {id'}
+    @id.ref := id', // was causing errors, explicated terms don't support annotations?
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id'}, T)) | _] | error $[Variable [id] not defined].
+
+ /**
+  * Definitie:
+  * - genereer een declaratie voor de definitie met Def{_} namespace
+  * - check dat het type overeenkomt met de 'dichtsbijzijnde' signature
+  * - check dat er geen andere definitie is met dezelfde naam
+  */
+  defineFun : scope * ID * TYPE
+  defineFun(s, id, t) :-
+    declareFunProto(s, id, t), // guarantee there's always a signature
+    declareVar(s, id, t).
+
+  /**
+   * Signature:
+   * - genereer een declaratie (unconditionally) met de Sig{_} namespace;
+   *   er mogen meerdere declaraties van een naam zijn in scope graphs
+   * - check dat andere declaraties met dezelfde naam hetzelfde type hebben
+   */
+  declareFunProto : scope * ID * TYPE
+  declareFunProto(s, id, T) :- {Ts results}
+    s -> FunProto{id} with type T,
+    type of FunProto{id} in s |-> results,
+    Ts == typesOfQueryResults(results),
+    equiTypes(T, Ts).
+
+  equiType : TYPE * TYPE
+  equiTypes maps equiType(*, list(*))
+  equiType(Ta, Tb) :-
+    Ta == Tb.
+
+  typeOfQueryResult : (path * (occurrence * TYPE)) -> TYPE
+  typesOfQueryResults maps typeOfQueryResult(list(*)) = list(*)
+  typeOfQueryResult((_, (_, T))) = T.
+
+  typeOfFun : scope * ID -> TYPE
+  typeOfFun(s, id) = T :- {id'}
+    @id.ref := id',
+    type of FunProto{id} in s |-> [(_, (FunProto{id'}, T)) | _].
+
+  declareTypedef : scope * ID * TYPE
+  declareTypedef(s, id, T) :-
+    s -> VarFunType{id} with type T,
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id}, _))] | error $[Type [id] already defined].
+
+  typeOfTypedef : scope * ID -> TYPE
+  typeOfTypedef(s, id) = T :- {id'}
+    @id.ref := id',
+    type of VarFunType{id} in s |-> [(_, (VarFunType{id'}, T)) | _] | error $[Type [id] not defined].
+
+  declareLabel : scope * ID
+  declareLabel(s, id) :-
+    s -> Label{id},
+    Label{id} in s |-> [(_, (Label{id}))] | error  $[redefinition of label [id]].
+
+  resolveLabel : scope * ID
+  resolveLabel(s, id) :- {id'}
+    @id.ref := id',
+    Label{id} in s |-> [(_, (Label{id'})) | _] | error  $[use of undeclared label [id]].
+
+rules declareStructOrUnion : scope * ID * TYPE
+
+  declareStructOrUnion(s, id, T) :-
+    s -> StructUnionEnum{id} with type T,
+    type of StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id}, _))]
+        | error $[Struct or union [id] already defined].
+
+rules typeOfStructOrUnion : scope * ID -> TYPE
+
+  typeOfStructOrUnion(s, id) = T :- {id'}
+    @id.ref := id',
+    type of StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id'}, T))]
+        | error $[Struct or union [id] not defined].
+
+rules declareStructMember : scope * ID * int * TYPE
+
+  declareStructMember(s, id, pos, T) :-
+    s -> StructMember{id pos} with type T,
+    type of StructMember{id pos} in s |-> [(_, (StructMember{id pos}, _))] | error $[StructMember [id] already defined].
+
+rules typeOfStructMember : scope * ID -> TYPE
+
+ typeOfStructMember(s, id) = T :-
+    type of StructMember{id _} in s |-> [(_, (StructMember{id _}, T)) | _] | error $[StructMember [id] not defined].
+    
+rules typeOfStructMemberAt : scope * int -> TYPE
+
+  typeOfStructMemberAt(s, pos) = T :- {id' T'}
+    type of StructMember{_ pos} in s |-> [(_, (StructMember{id' pos}, T')) | _]
+        | error $[StructMember at position [pos] not defined],
+    type of StructMember{_ pos} in s |-> [(_, (StructMember{_ pos}, T)) | _]
+        | error $[Initializer of type [T] is not convertible to member [id'] of type [T']].
+      
+
+rules declareEnum : scope * ID
+
+  declareEnum(s, id) :-
+    s -> StructUnionEnum{id},
+    StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id}))] | error $[Enum [id] already defined].
+
+
+rules enumDeclared : scope * ID
+
+  enumDeclared(s, id) :-
+    StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id})) | _] | error $[Enum [id] not defined].

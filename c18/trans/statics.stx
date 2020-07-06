@@ -1,12 +1,20 @@
 module statics
 
+imports
+  signatures/c18-sig
+  signatures/c-syntax-sig
+  signatures/c-lexical-sig
+  signatures/c-preprocessor-sig
+  
+  analysis/declarations
+
 // see README.md for details on how to switch to multi-file analysis
 
 rules // single-file entry point
 
   programOk : Start
-
-  programOk(_).
+  programOk(TranslationUnit2Start(t)) :-
+    translationUnitOk(t).
 
 rules // multi-file entry point
 
@@ -16,9 +24,4 @@ rules // multi-file entry point
 
   fileOk : scope * Start
 
-  fileOk(s, Empty()).
-
-signature
-
-  sorts Start constructors
-    Empty : Start
+  fileOk(s, _).
