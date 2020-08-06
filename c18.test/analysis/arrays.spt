@@ -21,6 +21,7 @@ test array (length > initializer) [[
   int x[5] = {1,2,3};
 ]] analysis succeeds
 
+// NOT IMPLEMENTED
 test array (length < initializer) [[
   int x[1] = {1,2,3};
 ]] analysis fails
@@ -37,6 +38,7 @@ test nested array (2d, length, no initializer) [[
 int x[8][8];
 ]] analysis succeeds
 
+// NOT IMPLEMENTED
 test nested array (2d, length, initializer) [[
 int x[2][2] = {
 	{1, 0},
@@ -44,6 +46,7 @@ int x[2][2] = {
 };
 ]] analysis succeeds
 
+// NOT IMPLEMENTED
 test nested array (2d, no length, intializer) [[
 int x[][] = {
 	{0, 1},
@@ -58,6 +61,7 @@ int x[2][1] = {
 };
 ]] analysis fails
 
+// NOT IMPLEMENTED
 test nested array (2d, no length, inner length mismatch) [[
 int x[][] = {
 	{0, 1},

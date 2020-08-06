@@ -58,6 +58,7 @@ int main() {
 }
 ]] analysis succeeds
 
+// NOT IMPLEMENTED
 test bit field [[
 struct Packed_struct {
    unsigned int f1:1;
