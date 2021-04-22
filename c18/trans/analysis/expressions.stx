@@ -59,7 +59,7 @@ rules
     scalarType(typeOfExp(s, e1)),
     scalarType(typeOfExp(s, e2)).
     
-  typeOfExp(s, Order(e1, _, e2)) = INT :- {T1 T2}
+  typeOfExp(s, Order(e1, _, e2)) = INT() :- {T1 T2}
     typeOfExp(s, e1) == T1,
     typeOfExp(s, e2) == T2,
     typeOfOrder(T1, T2) == _.

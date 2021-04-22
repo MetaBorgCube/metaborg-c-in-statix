@@ -37,7 +37,7 @@ rules
   
   desugar: LOr(a, b) -> UnOp(Not(), LAnd(UnOp(Not(), a), UnOp(Not(), b)))
 
-  desugar: InitializerComma(is) -> Initializer(is)
+  desugar: InitializerComma(i) -> Initializer(i)
 
   desugar: ArrayDecl1(dd, _) -> ArrayDecl(dd)
   desugar: ArrayDecl2(dd, _) -> ArrayDecl(dd)

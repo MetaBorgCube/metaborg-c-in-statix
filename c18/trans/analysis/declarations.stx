@@ -9,28 +9,29 @@ imports
   analysis/util
 
 signature
-  namespaces
+  relations
     // actual C namespaces
-    VarFunType      : ID
-    StructUnionEnum : ID
-    StructMember          : ID * int
+    VarFunType      : ID -> TYPE
+    StructUnionEnum : ID -> TYPE
+    StructMember    : ID * int -> TYPE
     Label           : ID
 
     // helper namespaces
-    FunProto          : ID
-    Return          :
+    FunProto        : ID -> TYPE
+    Return          : -> TYPE
 
-  name-resolution labels P F
-    resolve VarFunType      filter P*    min $ < P
-    resolve StructUnionEnum filter P*    min $ < P
-    resolve StructMember          filter P*    min $ < P
-    resolve Label           filter P* F* min $ < P, $ < F, F < P
+  name-resolution
+  labels P F
+//    resolve VarFunType      filter P*    min $ < P
+//    resolve StructUnionEnum filter P*    min $ < P
+//    resolve StructMember          filter P*    min $ < P
+//    resolve Label           filter P* F* min $ < P, $ < F, F < P
+//
+//    resolve FunProto          filter P*    min $ < P
+//    resolve Return          filter P*    min $ < P
 
-    resolve FunProto          filter P*    min $ < P
-    resolve Return          filter P*    min $ < P
-
-  relations
-    type : occurrence -> TYPE
+//  relations
+//    type : occurrence -> TYPE
 
 
 rules
@@ -53,7 +54,7 @@ rules
     typeOfPointer(p, retTu) == retT,
     new s_fun,
     s_fun -P-> s,
-    s_fun -> Return{} with type retT,
+    !Return[retT] in s_fun,
     paramsOk(s_fun, params) == (paramIDs, paramTs),
     declsOk(s_fun, decls),
     compStmtOk(s_fun, compStmt),
@@ -333,13 +334,19 @@ rules // declaring / resolving variables and functions
   declareVar : scope * ID * TYPE
   declareVars maps declareVar(*, list(*), list(*))
   declareVar(s, id, T) :-
-    s -> VarFunType{id} with type T,
-    type of VarFunType{id} in s |-> [(_, (VarFunType{id}, _))] | error $[Variable [id] already defined].
+    !VarFunType[id, T] in s,
+    query VarFunType
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id, T))] | error $[Variable [id] already defined].
 
   typeOfVar : scope * ID -> TYPE
   typeOfVar(s, id) = T :- {id'}
     @id.ref := id', // was causing errors, explicated terms don't support annotations?
-    type of VarFunType{id} in s |-> [(_, (VarFunType{id'}, T)) | _] | error $[Variable [id] not defined].
+    query VarFunType
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id', T))|_] | error $[Variable [id] not defined].
 
  /**
   * Definitie:
@@ -360,8 +367,11 @@ rules // declaring / resolving variables and functions
    */
   declareFunProto : scope * ID * TYPE
   declareFunProto(s, id, T) :- {Ts results}
-    s -> FunProto{id} with type T,
-    type of FunProto{id} in s |-> results,
+    !FunProto[id, T] in s,
+    query FunProto
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> results,
     Ts == typesOfQueryResults(results),
     equiTypes(T, Ts).
 
@@ -370,77 +380,112 @@ rules // declaring / resolving variables and functions
   equiType(Ta, Tb) :-
     Ta == Tb.
 
-  typeOfQueryResult : (path * (occurrence * TYPE)) -> TYPE
+  typeOfQueryResult : (path * (ID * TYPE)) -> TYPE
   typesOfQueryResults maps typeOfQueryResult(list(*)) = list(*)
   typeOfQueryResult((_, (_, T))) = T.
 
   typeOfFun : scope * ID -> TYPE
   typeOfFun(s, id) = T :- {id'}
     @id.ref := id',
-    type of FunProto{id} in s |-> [(_, (FunProto{id'}, T)) | _].
+    query FunProto
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id', T)) | _].
 
   declareTypedef : scope * ID * TYPE
   declareTypedef(s, id, T) :-
-    s -> VarFunType{id} with type T,
-    type of VarFunType{id} in s |-> [(_, (VarFunType{id}, _))] | error $[Type [id] already defined].
+    !VarFunType[id, T] in s,
+    query VarFunType
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id, T))] | error $[Type [id] already defined].
 
   typeOfTypedef : scope * ID -> TYPE
   typeOfTypedef(s, id) = T :- {id'}
     @id.ref := id',
-    type of VarFunType{id} in s |-> [(_, (VarFunType{id'}, T)) | _] | error $[Type [id] not defined].
+    query VarFunType
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id', T))|_] | error $[Type [id] not defined].
 
   declareLabel : scope * ID
   declareLabel(s, id) :-
-    s -> Label{id},
-    Label{id} in s |-> [(_, (Label{id}))] | error  $[redefinition of label [id]].
+    !Label[id] in s,
+    query Label
+      filter P* F* and { x :- x == id }
+        min $ < P, $ < F, F < P and true
+          in s |-> [(_, (id))] | error  $[redefinition of label [id]].
 
   resolveLabel : scope * ID
   resolveLabel(s, id) :- {id'}
     @id.ref := id',
-    Label{id} in s |-> [(_, (Label{id'})) | _] | error  $[use of undeclared label [id]].
+    query Label
+      filter P* F* and { x :- x == id }
+        min $ < P, $ < F, F < P and true
+          in s |-> [(_, (id')) | _] | error  $[use of undeclared label [id]].
 
 rules declareStructOrUnion : scope * ID * TYPE
 
   declareStructOrUnion(s, id, T) :-
-    s -> StructUnionEnum{id} with type T,
-    type of StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id}, _))]
-        | error $[Struct or union [id] already defined].
+    !StructUnionEnum[id, T] in s,
+    query StructUnionEnum
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id, T))] | error $[Struct or union [id] already defined].
 
 rules typeOfStructOrUnion : scope * ID -> TYPE
 
   typeOfStructOrUnion(s, id) = T :- {id'}
     @id.ref := id',
-    type of StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id'}, T))]
-        | error $[Struct or union [id] not defined].
+    query StructUnionEnum
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id', T))|_] | error $[Struct or union [id] not defined].
 
 rules declareStructMember : scope * ID * int * TYPE
 
   declareStructMember(s, id, pos, T) :-
-    s -> StructMember{id pos} with type T,
-    type of StructMember{id pos} in s |-> [(_, (StructMember{id pos}, _))] | error $[StructMember [id] already defined].
+    !StructMember[id, pos, T] in s,
+    query StructMember
+      filter P* and { x :- x == (id, pos) }
+        min $ < P and true
+          in s |-> [(_, (id, pos, _))] | error $[StructMember [id] already defined].
 
 rules typeOfStructMember : scope * ID -> TYPE
 
  typeOfStructMember(s, id) = T :-
-    type of StructMember{id _} in s |-> [(_, (StructMember{id _}, T)) | _] | error $[StructMember [id] not defined].
+    query StructMember
+      filter P* and { x :- x == (id, _) }
+        min $ < P and true
+          in s |-> [(_, (id, _, T))|_] | error $[StructMember [id] not defined].
     
 rules typeOfStructMemberAt : scope * int -> TYPE
 
   typeOfStructMemberAt(s, pos) = T :- {id' T'}
-    type of StructMember{_ pos} in s |-> [(_, (StructMember{id' pos}, T')) | _]
-        | error $[StructMember at position [pos] not defined],
-    type of StructMember{_ pos} in s |-> [(_, (StructMember{_ pos}, T)) | _]
-        | error $[Initializer of type [T] is not convertible to member [id'] of type [T']].
-      
+    query StructMember
+      filter P* and { x :- x == (_, pos) }
+        min $ < P and true
+          in s |-> [(_, (id', pos, T'))|_] | error $[StructMember at position [pos] not defined],
+    query StructMember
+      filter P* and { x :- x == (_, pos) }
+        min $ < P and true
+          in s |-> [(_, (_, pos, T))|_] | error $[Initializer of type [T] is not convertible to member [id'] of type [T']].
+
 
 rules declareEnum : scope * ID
 
   declareEnum(s, id) :-
-    s -> StructUnionEnum{id},
-    StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id}))] | error $[Enum [id] already defined].
+    !StructUnionEnum[id, _] in s,
+    query StructUnionEnum
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id, _))] | error $[Enum [id] already defined].
 
 
 rules enumDeclared : scope * ID
 
   enumDeclared(s, id) :-
-    StructUnionEnum{id} in s |-> [(_, (StructUnionEnum{id})) | _] | error $[Enum [id] not defined].
+    query StructUnionEnum
+      filter P* and { x :- x == id }
+        min $ < P and true
+          in s |-> [(_, (id, _)) | _] | error $[Enum [id] not defined].
