@@ -117,8 +117,9 @@ rules initializerTypesOk : scope * TYPE * list(Initializer)
     
 rules initializerOk : scope * scope * Initializer * int
 
-  initializerOk(s, s_struct, AssignExp2Initializer(Exp2AssignExp(e)), pos) :-
-    typeOfStructMemberAt(s_struct, pos) == typeOfExp(s, e).
+  initializerOk(s, s_struct, AssignExp2Initializer(Exp2AssignExp(e)), pos) :- {T}
+    typeOfStructMemberAt(s_struct, pos) == T,
+    typeOfExp(s, e) == T.
     
   initializerOk(s, s_struct, Initializer(is), pos) :- {s_substruct}
     typeOfStructMemberAt(s_struct, pos) == STRUCT(s_substruct),
@@ -133,16 +134,21 @@ rules initializersOk : scope * scope * list(Initializer) * int
     initializersOk(s, s_struct, is, #(pos + 1)).
 
   declrtrOk : scope * Declarator -> ID
-  declrtrOk(s, Declarator(_, dd)) = dirDeclrtrOk(s, dd).
+  declrtrOk(s, Declarator(_, dd)) = id :-
+    dirDeclrtrOk(s, dd) == id.
 
   dirDeclrtrOk : scope * DirectDeclarator -> ID
 
   dirDeclrtrOk(s, IdDecl(id)) = id.
-  dirDeclrtrOk(s, DeclBracket(d)) = declrtrOk(s, d).
-  dirDeclrtrOk(s, ArrayDecl(d)) = dirDeclrtrOk(s, d).
-  dirDeclrtrOk(s, ArrayDeclLength(d, l)) = dirDeclrtrOk(s, d) :- {e}
+  dirDeclrtrOk(s, DeclBracket(d)) = id :-
+    declrtrOk(s, d) == id.
+  dirDeclrtrOk(s, ArrayDecl(d)) = id :-
+    dirDeclrtrOk(s, d) == id.
+  dirDeclrtrOk(s, ArrayDeclLength(d, l)) = id :- {e T}
+    dirDeclrtrOk(s, d) == id,
 	Exp2AssignExp(e) == l,
-	intType(typeOfExp(s, e)).
+	typeOfExp(s, e) == T,
+	intType(T).
 
   abstDeclrtrOk : scope * AbstractDeclarator
 
@@ -203,16 +209,20 @@ rules initializersOk : scope * scope * list(Initializer) * int
     
 rules typeOfAbsDecl : scope * TYPE * AbstractDeclarator -> TYPE
 
-  typeOfAbsDecl(s, tu, DirDecl(po, dad)) = typeOfPointer(po, typeOfDirAbsDecl(s, tu, dad)). 
-  typeOfAbsDecl(_, tu, Pointer2AbstractDeclarator(p)) = typeOfPointer(Pointer2Pointer-OPT(p), tu).
+  typeOfAbsDecl(s, tu, DirDecl(po, dad)) = Tp :- {T}
+    typeOfPointer(po, T) == Tp,
+    typeOfDirAbsDecl(s, tu, dad) == T. 
+  typeOfAbsDecl(_, tu, Pointer2AbstractDeclarator(p)) = T :-
+    typeOfPointer(Pointer2Pointer-OPT(p), tu) == T.
   
   
 rules typeOfDirAbsDecl : scope * TYPE * DirectAbstractDeclarator -> TYPE
 
-  typeOfDirAbsDecl(s, tu, AbsDecl(ad)) = typeOfAbsDecl(s, tu, ad).
+  typeOfDirAbsDecl(s, tu, AbsDecl(ad)) = T :-
+    typeOfAbsDecl(s, tu, ad) == T.
   typeOfDirAbsDecl(s, tu, AArrayDecl(NoDirectAbstractDeclarator(), _)) = POINTER(tu).
-  typeOfDirAbsDecl(s, tu, AArrayDecl(DirectAbstractDeclarator2DirectAbstractDeclarator-OPT(dad), _))
-      = typeOfDirAbsDecl(s, POINTER(tu), dad).
+  typeOfDirAbsDecl(s, tu, AArrayDecl(DirectAbstractDeclarator2DirectAbstractDeclarator-OPT(dad), _)) = T :-
+    typeOfDirAbsDecl(s, POINTER(tu), dad) == T.
 // TODO: function pointers
 //  typeOfDirAbsDecl(s, tu, AFunDecl(NoDirectAbstractDeclarator(), NoParameterTypeList()
 
@@ -245,22 +255,29 @@ rules declWithDeclrtr : scope * TYPE * InitDeclarator * Declarator
     
   typeOfPointer : Pointer-OPT * TYPE -> TYPE
   typeOfPointer(NoPointer(), T) = T.
-  typeOfPointer(Pointer2Pointer-OPT(Pointer(po, q)), T) = POINTER(typeOfPointer(po, T)).
+  typeOfPointer(Pointer2Pointer-OPT(Pointer(po, q)), T) = POINTER(Tp) :-
+    typeOfPointer(po, T) == Tp.
 
   declSpecsToType : scope * list(DeclarationSpecifier) -> TYPE
-  declSpecsToType(s, specs) = typeOfType(s, declSpecsToTypeSpecs(specs)).
+  declSpecsToType(s, specs) = T :- {Ts}
+    typeOfType(s, Ts) == T,
+    declSpecsToTypeSpecs(specs) == Ts.
 
   declSpecsToTypeSpecs : list(DeclarationSpecifier) -> list(TypeSpecifier)
   declSpecsToTypeSpecs([]) = [].
-  declSpecsToTypeSpecs([TypeSpecifier2DeclarationSpecifier(ts) | dss]) = [ts | declSpecsToTypeSpecs(dss)].
-  declSpecsToTypeSpecs([_ | dss]) = declSpecsToTypeSpecs(dss).
+  declSpecsToTypeSpecs([TypeSpecifier2DeclarationSpecifier(ts) | dss]) = [ts | ts'] :-
+    declSpecsToTypeSpecs(dss) == ts'.
+  declSpecsToTypeSpecs([_ | dss]) = ts :-
+    declSpecsToTypeSpecs(dss) == ts.
   
   specQualsToDeclSpecs : list(SpecifierQualifier) -> list(DeclarationSpecifier)
   specQualsToDeclSpecs([]) = [].
   specQualsToDeclSpecs([TypeSpecifier2SpecifierQualifier(ts) | sqs]) = 
-      [TypeSpecifier2DeclarationSpecifier(ts) | specQualsToDeclSpecs(sqs)].
+      [TypeSpecifier2DeclarationSpecifier(ts) | ds] :-
+    specQualsToDeclSpecs(sqs) == ds.
   specQualsToDeclSpecs([TypeQualifier2SpecifierQualifier(tq) | sqs]) = 
-      [TypeQualifier2DeclarationSpecifier(tq) | specQualsToDeclSpecs(sqs)].
+      [TypeQualifier2DeclarationSpecifier(tq) | ds] :-
+    specQualsToDeclSpecs(sqs) == ds.
 
 
 rules typeOfEnum : scope * TypeID-OPT * list(Enumerator) -> TYPE
@@ -305,8 +322,9 @@ rules defineStructOrUnion : scope * TypeID-OPT * TYPE
     
 rules structDeclOk : scope * scope * StructDeclaration * int -> int
 
-  structDeclOk(s, s_struct, StructDecl(qs, decls), pos) = EPOS :- {T}
-    declSpecsToType(s, specQualsToDeclSpecs(qs)) == T,
+  structDeclOk(s, s_struct, StructDecl(qs, decls), pos) = EPOS :- {T specs}
+    declSpecsToType(s, specs) == T,
+    specQualsToDeclSpecs(qs) == specs,
     structMultiDeclOk(s, s_struct, T, decls, pos) == EPOS.
     
 rules structDeclsOk : scope * scope * list(StructDeclaration) * int
