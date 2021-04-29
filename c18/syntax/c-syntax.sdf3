@@ -340,7 +340,10 @@ context-free priorities
   AssignExp = Exp  <0>. > Exp.Comma
 
 context-free priorities
-
+  {FloatingConstant.DecFloat
+   FloatingConstant.HexFloat
+  }
+  >
   {Exp.Subscript
    Exp.Call
    Exp.Proj
