@@ -63,10 +63,10 @@ rules
     mainOk(s, id, paramTs, retT) | error "parameter types on 'main' have incorrect types".
     
     
-rules foldVoidParam : list(TYPE) -> list(TYPE)
+rules foldVoidParam : list(ID) * list(TYPE) -> (list(ID) * list(TYPE))
 
-  foldVoidParam([VOID()]) = [].
-  foldVoidParam(P) = P.
+  foldVoidParam(_, [VOID()]) = ([], []).
+  foldVoidParam(id, P) = (id, P).
 
 
   mainOk : scope * ID * list(TYPE) * TYPE
@@ -167,23 +167,23 @@ rules initializersOk : scope * scope * list(Initializer) * int
   // Decl : list(DeclarationSpecifier) * list(InitDeclarator) -> Declaration
   declOk : scope * Declaration
   declsOk maps declOk(*, list(*))
-  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramIDs paramTs paramTVs s_fun qRes}
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamList(params))))])) :- {retTu retT paramIDs paramIDVs paramTs paramTVs s_fun qRes}
     new s_fun,
     s_fun -P-> s,
     declSpecsToType(s, declSpecs) == retTu,
     typeOfPointer(p, retTu) == retT,
     declareVars(s_fun, paramIDs, paramTs),
-    paramsOk(s_fun, params) == (paramIDs, paramTVs),
-    foldVoidParam(paramTVs) == paramTs,
+    paramsOk(s_fun, params) == (paramIDVs, paramTVs),
+    foldVoidParam(paramIDVs, paramTVs) == (paramIDs, paramTs),
     declareFunProto(s, id, FUN(paramTs, retT)).
-  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamListVarArgs(params))))])) :- {retTu retT paramIDs paramTs paramTVs s_fun qRes}
+  declOk(s, Decl(declSpecs, [i@Declarator2InitDeclarator(Declarator(p, FunDeclTyped(IdDecl(id), ParamListVarArgs(params))))])) :- {retTu retT paramIDs paramIDVs paramTs paramTVs s_fun qRes}
     new s_fun,
     s_fun -P-> s,
     declSpecsToType(s, declSpecs) == retTu,
     typeOfPointer(p, retTu) == retT,
     declareVars(s_fun, paramIDs, paramTs),
-    paramsOk(s, params) == (paramIDs, paramTVs),
-    foldVoidParam(paramTVs) == paramTs,
+    paramsOk(s, params) == (paramIDVs, paramTVs),
+    foldVoidParam(paramIDVs, paramTVs) == (paramIDs, paramTs),
     declareFunProto(s, id, VARFUN(paramTs, retT)).
   declOk(s, Decl([StorageClassSpecifier2DeclarationSpecifier(Typedef()), TypeSpecifier2DeclarationSpecifier(TypedefName1(id)) | declSpecs], [])) :- {T}
     declSpecsToType(s, declSpecs) == T,
