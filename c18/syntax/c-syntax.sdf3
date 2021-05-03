@@ -147,11 +147,17 @@ context-free syntax
     <Pointer-OPT> <DirectDeclarator>
   > 
   
-  DirectDeclarator.IdDecl = ID 
-  DirectDeclarator.DeclBracket = <(<Declarator>)> 
-  DirectDeclarator.ArrayDecl = <<DirectDeclarator> []>
-  DirectDeclarator.ArrayDeclLength = <<DirectDeclarator> [<ConstExp>]>
+  DirectDeclarator.IdDecl = ID
+  DirectDeclarator.DeclBracket = <(<Declarator>)>
+  DirectDeclarator.ArrayDecl = <<DirectDeclarator> [ ]>
+  DirectDeclarator.ArrayDecl1 = <<DirectDeclarator> [<TypeQualifier+>]>
+  DirectDeclarator.ArrayDecl2 = <<DirectDeclarator> [<TypeQualifier*> *]>
+  DirectDeclarator.ArrayDeclLength = <<DirectDeclarator> [<AssignExp>]>
+  DirectDeclarator.ArrayDeclLength1 = <<DirectDeclarator> [<TypeQualifier+> <AssignExp>]>
+  DirectDeclarator.ArrayDeclLength2 = <<DirectDeclarator> [static <TypeQualifier*> <AssignExp>]>
+  DirectDeclarator.ArrayDeclLength3 = <<DirectDeclarator> [<TypeQualifier+> static <AssignExp>]>
   DirectDeclarator.FunDeclTyped = <<DirectDeclarator>(<ParameterTypeList>)> 
+  DirectDeclarator.IdListDecl = <(<ID*>)>
   
   ParameterTypeList.ParamList = <<{ParameterDeclaration ", "}*>>
   ParameterTypeList.ParamListVarArgs = <<{ParameterDeclaration ", "}+> , ...> 
@@ -264,7 +270,7 @@ context-free syntax
 //
 //  Start = Exp 
 
-sorts Exp Exp-OPT EqNeqOp OrderOp ShiftOp AddSubOp MulDivModOp
+sorts Exp Exp-OPT EqNeqOp OrderOp ShiftOp MulDivOp
 context-free syntax
 
   Exp-OPT       = Exp
@@ -294,14 +300,14 @@ context-free syntax
   ShiftOp.Lshift = [<<]
   ShiftOp.Rshift = [>>]
   
-  Exp.AddSub = <<Exp> <AddSubOp> <Exp>> {left}
-  AddSubOp.Add = <+>
-  AddSubOp.Sub = [-]
+  Exp.Add = <<Exp> + <Exp>> {left}
+  Exp.Sub = <<Exp> - <Exp>> {left}
   
-  Exp.MulDivMod = <<Exp> <MulDivModOp> <Exp>> {left}
-  MulDivModOp.Mul = <*>
-  MulDivModOp.Div = </>
-  MulDivModOp.Mod = <%>
+  Exp.MulDiv = <<Exp> <MulDivOp> <Exp>> {left}
+  MulDivOp.Mul = <*>
+  MulDivOp.Div = </>
+
+  Exp.Mod = <<Exp> % <Exp>> {left}
   
   Exp.Cast      = <(<TypeName>)<Exp>> 
   Exp.PreInc    = <++<Exp>> 
@@ -349,9 +355,11 @@ context-free priorities
   } 
   > Exp.Cast 
   > {left :
-   Exp.MulDivMod
+   Exp.MulDiv
+   Exp.Mod
   } > {left :
-    Exp.AddSub
+    Exp.Add
+    Exp.Sub
   } > {left :
     Exp.Shift
   } > {left :
@@ -374,8 +382,10 @@ context-free priorities
 context-free priorities
 
   Exp.Assign <0>. > {Exp.Cast
-                     Exp.MulDivMod
-                     Exp.AddSub
+                     Exp.MulDiv
+                     Exp.Mod
+                     Exp.Add
+                     Exp.Sub
                      Exp.Shift
                      Exp.Order
                      Exp.EqNeq

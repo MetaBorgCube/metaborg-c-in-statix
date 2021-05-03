@@ -35,7 +35,7 @@ rules
     scalarType(T),
     stmtOk(s, then),
     stmtOk(s, else).
-  stmtOk(s, Switch(e, case)) :- {T} // TODO switch should not accept _Bool, which is an int type now.
+  stmtOk(s, Switch(e, case)) :- {T}
     typeOfExp(s, e) == T,
     intType(T) | error $[statement requires expression of integer type ('[T]' invalid)] @e, // switch should have int type
     switchCaseOk(s, T, Statement2BlockItem(case)).
@@ -46,25 +46,31 @@ rules
   stmtOk(s, DoWhile(body, e)) :-
     typeOfExp(s, e) == _,
     stmtOk(s, body).
-  stmtOk(s, For(init_opt, e1_opt, e2_opt, body)) :- {s_for T}
+  stmtOk(s, For(init_opt, e1_opt, e2_opt, body)) :- {s_for x}
     new s_for,
     s_for -P-> s,
     s -F-> s_for,
     initClauseOptOk(s_for, init_opt),
-    typeOfExpOpt(s_for, e1_opt) == T,
-    scalarType(T), // TODO condition should be intType?
-    typeOfExpOpt(s_for, e2_opt) == _, // TODO type does not matter?
+    typeOfExpOpt(s_for, e1_opt) == x,
+    scalarType(x),
+    typeOfExpOpt(s_for, e2_opt) == _,
     stmtOk(s_for, body).
 
   stmtOk(s, Goto(id)) :-
     resolveLabel(s, id).
   stmtOk(s, Return(Exp2Exp-OPT(e))) :- {T Tr}
     typeOfExp(s, e) == T,
-    type of Return{} in s |-> [(_, (Return{}, Tr))],
+    query Return
+      filter P* and { x :- true }
+        min $ < P and true
+          in s |-> [(_, (Tr))],
     Tr != VOID() | error $[void function 'x' should not return a value (of type [Tr])],
     lub(T, Tr) == Tr | error $[Invalid return type [T] for function returning [Tr]].
   stmtOk(s, Return(NoExp())) :-
-    type of Return{} in s |-> [(_, (Return{}, VOID()))]  | error "non-void function 'x' should return a value".
+    query Return
+      filter P* and { x :- true }
+        min $ < P and true
+          in s |-> [(_, (VOID()))]  | error "non-void function 'x' should return a value".
   stmtOk(s, CompoundStatement2Statement(compStmt)) :-
     compStmtOk(s, compStmt).
   stmtOk(_, Break()). // TODO: check if in control flow

@@ -160,25 +160,40 @@ rules // type helpers
 	
 rules intType : TYPE
 
-  intType(BOOL()).
+  intType(ENUM()).
+  // standard signed integer types
   intType(SCHAR()).
-  intType(CHAR()).
   intType(SHORT()).
   intType(INT()).
   intType(LONG()).
   intType(LONGLONG()).
-  intType(ENUM()).
+  // standard unsigned integer types
+  intType(CHAR()).
+  intType(BOOL()).
   intType(T) :- {ST}
     signEquiv(ST, T).
 
-rules numberType : TYPE
-  numberType(FLOAT()).
-  numberType(DOUBLE()).
-  numberType(LONGDOUBLE()).
-  numberType(COMPLEX(_)).
-  numberType(IMAGINARY(_)).
-  numberType(T) :-
+rules floatingType : TYPE
+  floatingType(FLOAT()).
+  floatingType(DOUBLE()).
+  floatingType(LONGDOUBLE()).
+  floatingType(COMPLEX(T)) :- complexSubtype(_) == T.
+
+rules arithmeticType : TYPE
+  arithmeticType(FLOAT()).
+  arithmeticType(DOUBLE()).
+  arithmeticType(LONGDOUBLE()).
+  arithmeticType(COMPLEX(T)) :-
+    complexSubtype(_) == T.
+  arithmeticType(IMAGINARY(T)) :-
+    complexSubtype(_) == T.
+  arithmeticType(T) :-
     intType(T).
+
+rules scalarType : TYPE
+
+  scalarType(POINTER(_)).
+  scalarType(T) :- arithmeticType(T).
 	
 rules signEquiv : TYPE * TYPE
 
@@ -245,21 +260,9 @@ rules lub : TYPE * TYPE -> TYPE
   lubs maps lub(list(*), list(*)) = list(*)
 
   lub(T, T) = T.
-  lub(Ta, Tb) = T :- 
-    ilub(Ta, Tb) == T.
-  
-
-rules project : Bool * TYPE * TYPE -> TYPE
-
-  project(True(), T, _) = T.
-  project(False(), _, T) = T.  
-
-rules ilub : TYPE * TYPE -> TYPE
-
-  ilub(POINTER(Ta), POINTER(VOID())) = POINTER(Ta).
-  ilub(POINTER(VOID()), POINTER(Ta)) = POINTER(Ta).
-
-  ilub(Ta, Tb) = T :- {Ra Rb Rm}
+  lub(POINTER(Ta), POINTER(VOID())) = POINTER(Ta).
+  lub(POINTER(VOID()), POINTER(Ta)) = POINTER(Ta).
+  lub(Ta, Tb) = T :- {Ra Rb Rm}
     intConvRank(Ta) == Ra,
     intConvRank(Tb) == Rb,
     #(max(Ra, Rb)) == Rm,
@@ -271,12 +274,8 @@ rules projIntEq : int * int * TYPE * TYPE -> TYPE
   projIntEq(_, _, _, T) = convertIntType(T).
   
 rules convertIntType : TYPE -> TYPE
-  
+  // The expression that defines the value of an enumeration constant shall be
+  // an integer constant expression that has a value representable as an int.
+  convertIntType(ENUM()) = INT().
   convertIntType(Ti) = To :-
     Ti == To | error $[[Ti] is not implicitly convertible to [To]].
-    
-    
-rules scalarType : TYPE
-  
-  scalarType(POINTER(_)).
-  scalarType(T) :- intType(T).
