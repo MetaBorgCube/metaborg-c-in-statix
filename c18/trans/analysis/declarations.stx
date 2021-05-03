@@ -103,23 +103,11 @@ rules foldVoidParam : list(ID) * list(TYPE) -> (list(ID) * list(TYPE))
     dirDeclrtrOk(s, d) == id,
 	initializerTypesOk(s, Te, vals),
 	Ta == POINTER(Te). // TODO check nested arrays and lengths
-  initDeclrtrOk(s, Te, InitDecl(Declarator(p, d@ArrayDeclLength(_, c)), Initializer(vals))) = (id, Ta) :-
+  initDeclrtrOk(s, Te, InitDecl(Declarator(p, d@ArrayDeclLength(_, c)), i@Initializer(vals))) = (id, Ta) :-
     dirDeclrtrOk(s, d) == id,
 	initializerTypesOk(s, Te, vals),
-	Ta == POINTER(Te). // TODO check nested arrays and lengths
-	
-//	
-//  
-//  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDecl(_)), _)])) :- {id Tu T} // TODO does not accept list of declarators
-//  	declSpecsToType(s, declSpecs) == Tu,
-//  	typeOfPointer(p, Tu) == T,
-//  	initDeclrtrOk(s, T, i) == id,
-//  	declareVar(s, id, POINTER(T)).
-//  declOk(s, Decl(declSpecs, [i@InitDecl(Declarator(p, ArrayDeclLength(_, _)), _)])) :- {id Tu T} // TODO does not accept list of declarators
-//	declSpecsToType(s, declSpecs) == Tu,
-//	typeOfPointer(p, Tu) == T,
-//	initDeclrtrOk(s, T, i) == id,
-//	declareVar(s, id, POINTER(T)).
+	initializerLengthOk(c, vals) | error $[Array length too long]@i,
+	Ta == POINTER(Te). // TODO check nested arrays
 
 rules initializerTypesOk : scope * TYPE * list(Initializer)
 	initializerTypesOk(s, T, [i]) :- {e}
@@ -129,6 +117,10 @@ rules initializerTypesOk : scope * TYPE * list(Initializer)
 		i == AssignExp2Initializer(Exp2AssignExp(e)),
 		typeOfExp(s, e) == T,
 		initializerTypesOk(s, T, is).
+		
+rules initializerLengthOk : int * list(Initializer)
+	initializerLengthOk(c, vals) :-
+		geq(c, length(vals)).
     
 rules initializerOk : scope * scope * Initializer * int
 
